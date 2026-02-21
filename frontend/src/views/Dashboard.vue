@@ -753,22 +753,29 @@ const disabledDate = (time) => {
   return day === 0 || day === 6
 }
 
-const handleDateChange = () => {
+const fetchMarketSentiment = async () => {
+  try {
+    const response = await axios.get('/api/market/sentiment_925', {
+      params: { 
+        date: selectedDate.value,
+        _t: new Date().getTime() // Prevent caching
+      }
+    })
+    marketSentiment.value = response.data
+  } catch (error) {
+    console.error('Error fetching market sentiment:', error)
+  }
+}
+
+const refreshAll = () => {
   fetchTopN()
   fetchYesterdayLimitUp()
   fetchLimitUp925()
   fetchMarketSentiment()
 }
 
-const fetchMarketSentiment = async () => {
-  try {
-    const response = await axios.get('/api/market/sentiment_925', {
-      params: { date: selectedDate.value }
-    })
-    marketSentiment.value = response.data
-  } catch (error) {
-    console.error('Error fetching market sentiment:', error)
-  }
+const handleDateChange = () => {
+  refreshAll()
 }
 
 const fetchTopN = async () => {
@@ -865,9 +872,7 @@ onMounted(async () => {
      }
   }
 
-  fetchTopN()
-  fetchYesterdayLimitUp()
-  fetchLimitUp925()
+  refreshAll()
   
   startTimer()
 })
