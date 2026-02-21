@@ -146,8 +146,8 @@
           </template>
           <!-- Custom Layout for Yesterday Limit Up Performance -->
           <div class="yesterday-limit-up-container" style="height: calc(100vh - 180px); overflow-y: auto; padding: 20px;">
-             <div v-for="group in groupedYesterdayLimitUp" :key="group.boards" class="limit-up-group">
-                <div class="group-label">{{ group.boards }}板</div>
+             <div v-for="group in groupedYesterdayLimitUp" :key="group.key" class="limit-up-group">
+                <div class="group-label">{{ group.label }}</div>
                 <div class="group-items">
                    <div v-for="item in group.items" :key="item.code" class="stock-card">
                       <div class="stock-name">{{ item.name }}</div>
@@ -273,22 +273,51 @@ const handleScroll = (region) => {
 const groupedYesterdayLimitUp = computed(() => {
   if (!yesterdayLimitUpList.value || yesterdayLimitUpList.value.length === 0) return []
   
-  const groups = {}
+  const fanbaoItems = []
+  const regularGroups = {}
+  
   yesterdayLimitUpList.value.forEach(item => {
-    const key = item.consecutive_boards
-    if (!groups[key]) {
-      groups[key] = []
+    const days = item.consecutive_days || 0
+    const boards = item.consecutive_boards || 0
+    
+    // Counter-package condition: consecutive_days > 5 AND consecutive_days > consecutive_boards AND consecutive_boards <= 2
+    if (days > 5 && days > boards && boards <= 2) {
+      fanbaoItems.push(item)
+    } else {
+      // Regular grouping
+      if (!regularGroups[boards]) {
+        regularGroups[boards] = []
+      }
+      regularGroups[boards].push(item)
     }
-    groups[key].push(item)
   })
   
-  // Convert to array and sort by days descending
-  const result = Object.keys(groups).map(key => ({
-    boards: parseInt(key),
-    items: groups[key]
-  }))
+  // Sort regular groups
+  const sortedRegular = Object.keys(regularGroups)
+    .map(key => parseInt(key))
+    .sort((a, b) => b - a) // Descending
+    .map(boards => ({
+      key: `boards-${boards}`,
+      label: `${boards}板`,
+      items: regularGroups[boards]
+    }))
+    
+  // Prepend fanbao group if exists
+  if (fanbaoItems.length > 0) {
+    // Sort fanbao items by days descending
+    fanbaoItems.sort((a, b) => (b.consecutive_days || 0) - (a.consecutive_days || 0))
+    
+    return [
+      {
+        key: 'fanbao',
+        label: '反包',
+        items: fanbaoItems
+      },
+      ...sortedRegular
+    ]
+  }
   
-  return result.sort((a, b) => b.boards - a.boards)
+  return sortedRegular
 })
 
 const splitSector = (sectorStr) => {
