@@ -160,7 +160,9 @@
                       <div class="stock-info amount">
                         {{ formatAmount(item.amount) }}
                       </div>
-                      <div class="stock-sector" :style="getSectorStyle(item.sector)">{{ item.sector }}</div>
+                      <div style="display: flex; margin-left: 10px;">
+                        <span v-for="sec in getSortedSectors(item.sector).slice(0, 2)" :key="sec" class="stock-tag" :style="getHeatStyle(sec)">{{ sec }}</span>
+                      </div>
                    </div>
                 </div>
              </div>
@@ -300,11 +302,37 @@ const groupedYesterdayLimitUp = computed(() => {
   const sortedRegular = Object.keys(regularGroups)
     .map(key => parseInt(key))
     .sort((a, b) => b - a) // Descending
-    .map(boards => ({
-      key: `boards-${boards}`,
-      label: `${boards}板`,
-      items: regularGroups[boards]
-    }))
+    .map(boards => {
+      const items = regularGroups[boards]
+      
+      // Calculate limit up count (approximate based on opening price change)
+      const limitUpCount = items.filter(item => {
+        if (!item.change_percent) return false
+        const change = parseFloat(item.change_percent)
+        const name = item.name || ''
+        const code = item.code || ''
+        
+        let threshold = 9.8
+        if (name.includes('ST')) {
+          threshold = 4.8
+        } else if (code.startsWith('300') || code.startsWith('688')) {
+          threshold = 19.8
+        } else if (code.startsWith('8') || code.startsWith('43') || code.startsWith('83') || code.startsWith('87')) {
+          threshold = 29.8
+        }
+        
+        return change >= threshold
+      }).length
+      
+      const total = items.length
+      const rate = total > 0 ? Math.round((limitUpCount / total) * 100) : 0
+      
+      return {
+        key: `boards-${boards}`,
+        label: `${boards}进${boards + 1}板 (${limitUpCount}/${total}=${rate}%)`,
+        items: items
+      }
+    })
     
   // Prepend fanbao group if exists
   if (fanbaoItems.length > 0) {
@@ -511,41 +539,6 @@ const getChangeClass = (val) => {
   return ''
 }
 
-// Generate a deterministic color style for a sector name
-const getSectorStyle = (sectorName) => {
-  if (!sectorName) return {}
-  
-  // Simple hash function
-  let hash = 0
-  for (let i = 0; i < sectorName.length; i++) {
-    hash = sectorName.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  
-  // Predefined palette of background/text color pairs (light bg, dark text)
-  const palette = [
-    { bg: '#ecf5ff', text: '#409eff', border: '#d9ecff' }, // Blue
-    { bg: '#f0f9eb', text: '#67c23a', border: '#e1f3d8' }, // Green
-    { bg: '#fdf6ec', text: '#e6a23c', border: '#faecd8' }, // Orange
-    { bg: '#fef0f0', text: '#f56c6c', border: '#fde2e2' }, // Red
-    { bg: '#f4f4f5', text: '#909399', border: '#e9e9eb' }, // Grey
-    { bg: '#e8f3ff', text: '#2d8cf0', border: '#cce1ff' }, // Azure
-    { bg: '#fdf2f8', text: '#d03a72', border: '#fce7f3' }, // Pink
-    { bg: '#f0fdf4', text: '#16a34a', border: '#dcfce7' }, // Emerald
-    { bg: '#fff7ed', text: '#ea580c', border: '#ffedd5' }, // Amber
-    { bg: '#f5f3ff', text: '#7c3aed', border: '#ede9fe' }, // Violet
-    { bg: '#eff6ff', text: '#2563eb', border: '#dbeafe' }, // Blue-600
-    { bg: '#fff1f2', text: '#e11d48', border: '#ffe4e6' }  // Rose
-  ]
-  
-  const index = Math.abs(hash) % palette.length
-  const color = palette[index]
-  
-  return {
-    backgroundColor: color.bg,
-    color: color.text,
-    borderColor: color.border
-  }
-}
 
 const formatAmount = (val) => {
   if (!val) return '-'
@@ -744,13 +737,15 @@ onUnmounted(() => {
 
 /* Hide scrollbar for Chrome, Safari and Opera */
 .main-list::-webkit-scrollbar,
-.sub-list::-webkit-scrollbar {
+.sub-list::-webkit-scrollbar,
+.yesterday-limit-up-container::-webkit-scrollbar {
   display: none;
 }
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .main-list,
-.sub-list {
+.sub-list,
+.yesterday-limit-up-container {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
@@ -903,7 +898,7 @@ onUnmounted(() => {
   min-width: 100px;
   border: 1px solid #f0f0f0;
   border-radius: 4px;
-  padding: 8px 12px;
+  padding: 12px 16px;
   margin: 0;
   display: flex;
   flex-direction: row;
@@ -914,6 +909,19 @@ onUnmounted(() => {
   transition: all 0.2s;
   flex-grow: 0;
   position: relative;
+}
+
+.stock-card .stock-name {
+  font-size: 18px;
+}
+
+.stock-card .stock-info {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.stock-card .stock-tag {
+  font-size: 14px;
 }
 
 .edition-badge {
@@ -932,8 +940,10 @@ onUnmounted(() => {
 }
 
 .stock-card:hover {
-  background-color: #f0f7ff;
-  border-color: #d9ecff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: #e6a23c;
+  background-color: #fdf6ec;
 }
 
 /* Rank Card */
@@ -1059,16 +1069,7 @@ onUnmounted(() => {
   font-family: monospace;
 }
 
-.stock-sector {
-  font-size: 12px;
-  white-space: nowrap;
-  text-align: center;
-  padding: 2px 8px;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  font-weight: 500;
-  margin-left: 10px;
-}
+
 
 .text-red {
   color: #f56c6c;
