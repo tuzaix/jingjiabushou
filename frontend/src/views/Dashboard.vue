@@ -150,18 +150,19 @@
                 <div class="group-label" :style="group.rate >= 50 ? { color: '#f56c6c' } : {}">{{ group.label }}</div>
                 <div class="group-items">
                    <div v-for="item in group.items" :key="item.code" class="stock-card">
-                 <div v-if="item.edition && item.edition !== 0 && (item.consecutive_days > item.edition)" class="edition-badge">
-                    {{ item.consecutive_days }}天{{ item.edition }}板
-                 </div>
+                     <div v-if="item.code.startsWith('30') || item.code.startsWith('688')" class="limit-up-20cm-badge">20cm</div>
+                     <div v-if="item.edition && item.edition !== 0 && (item.consecutive_days > item.edition)" class="edition-badge">
+                        {{ item.consecutive_days }}天{{ item.edition }}板
+                     </div>
                  <div class="stock-name">{{ item.name }}</div>
                       <div class="stock-info">
                         <span :class="getChangeClass(item.change_percent)">{{ formatChange(item.change_percent) }}</span>
                       </div>
                       <div class="stock-info amount">
-                        {{ formatAmount(item.amount) }}
+                        {{ formatAmount(item.bidding_amount) }} / {{ formatAmount(item.asking_amount) }}
                       </div>
                       <div style="display: flex; margin-left: 10px;">
-                        <span v-for="sec in getSortedSectors(item.sector).slice(0, 2)" :key="sec" class="stock-tag" :style="getHeatStyle(sec)">{{ sec }}</span>
+                        <span v-for="sec in getSortedLimitUpSectors(item.sector).slice(0, 2)" :key="sec" class="stock-tag" :style="getLimitUpHeatStyle(sec)">{{ sec }}</span>
                       </div>
                    </div>
                 </div>
@@ -343,7 +344,7 @@ const groupedYesterdayLimitUp = computed(() => {
     return [
       {
         key: 'fanbao',
-        label: '反包',
+        label: '高位反包',
         items: fanbaoItems
       },
       ...sortedRegular
@@ -451,6 +452,84 @@ const getHeatStyle = (sectorName) => {
           color: colorSet.text, 
           border: `1px solid ${colorSet.border}`,
           fontWeight: 'bold'
+      }
+  }
+}
+
+// Compute frequency of each sector in the Yesterday Limit Up list
+const yesterdayLimitUpSectorFrequency = computed(() => {
+  const freq = {}
+  if (!yesterdayLimitUpList.value) return freq
+  
+  yesterdayLimitUpList.value.forEach(item => {
+    if (!item.sector) return
+    const sectors = splitSector(item.sector)
+    sectors.forEach(sec => {
+      freq[sec] = (freq[sec] || 0) + 1
+    })
+  })
+  return freq
+})
+
+const getSortedLimitUpSectors = (sectorStr) => {
+  const sectors = splitSector(sectorStr)
+  return sectors.sort((a, b) => {
+    const countA = yesterdayLimitUpSectorFrequency.value[a] || 0
+    const countB = yesterdayLimitUpSectorFrequency.value[b] || 0
+    return countB - countA // Descending
+  })
+}
+
+const getLimitUpHeatStyle = (sectorName) => {
+  const count = yesterdayLimitUpSectorFrequency.value[sectorName] || 0
+  
+  // Logic:
+  // 1. High absolute count (>=3) -> Solid, Bold Color (Hash-based Hue)
+  // 2. Medium absolute count (2) -> Light Background, Colored Text (Hash-based Hue)
+  // 3. Low absolute count (1) -> Grey (Noise reduction)
+  
+  if (count <= 1) {
+      return { backgroundColor: '#f4f4f5', color: '#909399', border: '1px solid #e9e9eb' } // Single (Gray)
+  }
+
+  // Generate distinct color based on name hash to ensure same sector has same color
+  let hash = 0
+  for (let i = 0; i < sectorName.length; i++) {
+    hash = sectorName.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  
+  const palette = [
+    { solid: '#409eff', light: '#ecf5ff', text: '#409eff', border: '#d9ecff' }, // Blue
+    { solid: '#67c23a', light: '#f0f9eb', text: '#67c23a', border: '#e1f3d8' }, // Green
+    { solid: '#e6a23c', light: '#fdf6ec', text: '#e6a23c', border: '#faecd8' }, // Orange
+    { solid: '#f56c6c', light: '#fef0f0', text: '#f56c6c', border: '#fde2e2' }, // Red
+    { solid: '#7c3aed', light: '#f5f3ff', text: '#7c3aed', border: '#ede9fe' }, // Purple
+    { solid: '#d946ef', light: '#fdf2f8', text: '#d946ef', border: '#fce7f3' }, // Pink
+    { solid: '#059669', light: '#ecfdf5', text: '#059669', border: '#d1fae5' }, // Emerald
+    { solid: '#0891b2', light: '#ecfeff', text: '#0891b2', border: '#cffafe' }, // Cyan
+    { solid: '#db2777', light: '#fdf2f8', text: '#db2777', border: '#fce7f3' }, // Rose
+    { solid: '#ca8a04', light: '#fefce8', text: '#ca8a04', border: '#fef9c3' }, // Yellow-Dark
+    { solid: '#4f46e5', light: '#eef2ff', text: '#4f46e5', border: '#e0e7ff' }, // Indigo
+    { solid: '#be123c', light: '#fff1f2', text: '#be123c', border: '#ffe4e6' }  // Rose-Dark
+  ]
+  
+  const index = Math.abs(hash) % palette.length
+  const colorSet = palette[index]
+  
+  if (count >= 3) {
+      // High Heat: Solid Color Background, White Text
+      return { 
+          backgroundColor: colorSet.solid, 
+          color: '#ffffff', 
+          border: 'none',
+          fontWeight: 'bold'
+      }
+  } else {
+      // Medium Heat (count == 2): Light Background, Colored Text
+      return { 
+          backgroundColor: colorSet.light, 
+          color: colorSet.text, 
+          border: `1px solid ${colorSet.border}`
       }
   }
 }
@@ -933,6 +1012,21 @@ onUnmounted(() => {
   top: -10px;
   right: -10px;
   background-color: #e6a23c;
+  color: white;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  white-space: nowrap;
+  z-index: 10;
+  font-weight: bold;
+}
+
+.limit-up-20cm-badge {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  background-color: #f56c6c;
   color: white;
   font-size: 12px;
   padding: 2px 8px;

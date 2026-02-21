@@ -308,10 +308,10 @@ class MarketService:
             # 3. Get auction data for these stocks on target_date at 09:25
             # We use IN clause
             format_strings = ','.join(['%s'] * len(codes))
-            # Updated to match new schema: bidding_percent, asking_amount
-            # Mapping: bidding_percent -> change_percent, asking_amount -> amount
+            # Updated to match new schema: bidding_percent, asking_amount, bidding_amount
+            # Mapping: bidding_percent -> change_percent
             query_auction = f"""
-            SELECT code, bidding_percent as change_percent, asking_amount as amount
+            SELECT code, bidding_percent as change_percent, asking_amount, bidding_amount
             FROM call_auction_data 
             WHERE date = %s 
               AND time >= '09:25:00' AND time < '09:26:00'
@@ -346,7 +346,8 @@ class MarketService:
                     'sector': stock['limit_up_type'], # Using limit_up_type as sector
                     'first_limit_up_time': first_time,
                     'change_percent': auction.get('change_percent'),
-                    'amount': auction.get('amount')
+                    'asking_amount': auction.get('asking_amount'),
+                    'bidding_amount': auction.get('bidding_amount')
                 }
                 result.append(item)
             
