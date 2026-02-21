@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 import logging
 from routes import api_bp
-from scheduler import init_scheduler
+# from scheduler import init_scheduler  <-- Removed
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -16,7 +16,8 @@ def create_app():
     app.register_blueprint(api_bp)
     
     # Init Scheduler
-    init_scheduler()
+    # Scheduler is now a separate service. Run scheduler.py independently.
+    # init_scheduler()
     
     return app
 

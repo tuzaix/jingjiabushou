@@ -88,6 +88,37 @@ class JiuyanService:
             return False, str(e)
 
     @staticmethod
+    def generate_curl_command(config):
+        if not config:
+            return ""
+        
+        url = config.get('url')
+        method = config.get('method', 'GET')
+        headers = config.get('headers', {})
+        body = config.get('body')
+        
+        parts = [f"curl '{url}'"]
+        
+        if method != 'GET':
+            parts.append(f"-X {method}")
+            
+        for key, value in headers.items():
+            # Escape single quotes in header values
+            safe_value = str(value).replace("'", "'\\''")
+            parts.append(f"-H '{key}: {safe_value}'")
+            
+        if body:
+            if isinstance(body, (dict, list)):
+                body_str = json.dumps(body)
+            else:
+                body_str = str(body)
+            # Escape single quotes in body
+            safe_body = body_str.replace("'", "'\\''")
+            parts.append(f"--data-raw '{safe_body}'")
+            
+        return " \\\n  ".join(parts)
+
+    @staticmethod
     def get_config():
         try:
             result = DatabaseManager.execute_query(
@@ -100,6 +131,9 @@ class JiuyanService:
                     row['headers'] = json.loads(row['headers'])
                 if isinstance(row['body'], str):
                     row['body'] = json.loads(row['body'])
+                
+                # Reconstruct curl command
+                row['curl'] = JiuyanService.generate_curl_command(row)
                 return row
             return None
         except Exception as e:

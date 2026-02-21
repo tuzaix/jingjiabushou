@@ -18,7 +18,7 @@
         </el-menu-item>
         <el-menu-item index="/admin/import">
           <el-icon><Upload /></el-icon>
-          <span>数据导入</span>
+          <span>更新数据</span>
         </el-menu-item>
         <el-menu-item index="/admin/system-config">
           <el-icon><Setting /></el-icon>

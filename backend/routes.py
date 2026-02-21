@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from services.market_service import MarketService
 from services.sync_service import SyncService
 from services.jiuyan_service import JiuyanService
+from services.eastmoney_service import EastmoneyService
 import tasks
 import logging
 import time
@@ -134,6 +135,34 @@ def jiuyan_sync():
         return jsonify({"message": "Fetch successful", "data": result})
     else:
         return jsonify({"error": result}), 500
+
+@api_bp.route('/api/admin/eastmoney/config', methods=['GET', 'POST'])
+def eastmoney_config():
+    if request.method == 'GET':
+        config = EastmoneyService.get_config()
+        return jsonify(config or {})
+    else:
+        data = request.get_json()
+        curl_command = data.get('curl')
+        if not curl_command:
+            return jsonify({"error": "Missing curl command"}), 400
+            
+        success, message = EastmoneyService.update_config(curl_command)
+        if success:
+            return jsonify({"message": message})
+        else:
+            return jsonify({"error": message}), 500
+
+@api_bp.route('/api/admin/eastmoney/test', methods=['POST'])
+def eastmoney_test():
+    """
+    Test fetching data from Eastmoney using the configured cURL command.
+    """
+    success, result = EastmoneyService.fetch_data()
+    if success:
+        return jsonify({"success": True, "data": result})
+    else:
+        return jsonify({"success": False, "error": result}), 500
 
 # Manual trigger for testing
 @api_bp.route('/api/test/fetch_call_auction', methods=['POST'])

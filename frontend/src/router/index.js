@@ -3,6 +3,7 @@ import FrontLayout from '../layouts/FrontLayout.vue'
 import AdminLayout from '../layouts/AdminLayout.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Admin from '../views/Admin.vue'
+import DataUpdate from '../views/Admin/DataUpdate.vue'
 
 const routes = [
   // Front-end Routes
@@ -32,8 +33,8 @@ const routes = [
       {
         path: 'import',
         name: 'AdminImport',
-        component: Admin, // Reusing Admin component for now, or split later
-        meta: { title: '数据导入' }
+        component: DataUpdate,
+        meta: { title: '更新数据' }
       },
       {
         path: 'system-config',
