@@ -39,7 +39,8 @@ const routes = [
       {
         path: 'system-config',
         name: 'SystemConfig',
-        component: () => import('../views/Admin/SystemConfig.vue')
+        component: () => import('../views/Admin/SystemConfig.vue'),
+        meta: { title: '系统配置' }
       }
     ]
   }

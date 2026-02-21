@@ -3,6 +3,7 @@ from services.market_service import MarketService
 from services.sync_service import SyncService
 from services.jiuyan_service import JiuyanService
 from services.eastmoney_service import EastmoneyService
+from services.kaipanla_service import KaipanlaService
 import tasks
 import logging
 import time
@@ -159,6 +160,34 @@ def eastmoney_test():
     Test fetching data from Eastmoney using the configured cURL command.
     """
     success, result = EastmoneyService.fetch_data()
+    if success:
+        return jsonify({"success": True, "data": result})
+    else:
+        return jsonify({"success": False, "error": result}), 500
+
+@api_bp.route('/api/admin/kaipanla/config', methods=['GET', 'POST'])
+def kaipanla_config():
+    if request.method == 'GET':
+        config = KaipanlaService.get_config()
+        return jsonify(config or {})
+    else:
+        data = request.get_json()
+        curl_command = data.get('curl')
+        if not curl_command:
+            return jsonify({"error": "Missing curl command"}), 400
+            
+        success, message = KaipanlaService.update_config(curl_command)
+        if success:
+            return jsonify({"message": message})
+        else:
+            return jsonify({"error": message}), 500
+
+@api_bp.route('/api/admin/kaipanla/test', methods=['POST'])
+def kaipanla_test():
+    """
+    Test fetching data from Kaipanla using the configured cURL command.
+    """
+    success, result = KaipanlaService.fetch_data()
     if success:
         return jsonify({"success": True, "data": result})
     else:
