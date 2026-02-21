@@ -88,6 +88,7 @@
                       <div v-if="getRankChangeInfo(item.code, index)" 
                            class="rank-change-indicator"
                            :style="{ color: getRankChangeInfo(item.code, index).color }">
+                         <span class="rank-change-text">{{ getRankChangeInfo(item.code, index).text }}</span>
                          <el-icon><component :is="getRankChangeInfo(item.code, index).icon" /></el-icon>
                       </div>
                    </div>
@@ -404,12 +405,14 @@ const getRankChangeInfo = (code, currentRank) => {
   if (rank915 === undefined) return null
   
   // currentRank is 0-based. Lower index = Higher rank.
-  if (currentRank < rank915) {
-    // Rank improved (e.g., 2 < 5) -> Red Up
-    return { icon: CaretTop, color: '#f56c6c' }
-  } else if (currentRank > rank915) {
-    // Rank declined (e.g., 5 > 2) -> Green Down
-    return { icon: CaretBottom, color: '#67c23a' }
+  const diff = rank915 - currentRank
+  
+  if (diff > 0) {
+    // Rank improved (e.g., 2 < 5, diff = 3) -> Red Up
+    return { icon: CaretTop, color: '#f56c6c', text: `+${diff}` }
+  } else if (diff < 0) {
+    // Rank declined (e.g., 5 > 2, diff = -3) -> Green Down
+    return { icon: CaretBottom, color: '#67c23a', text: `${diff}` }
   }
   
   return null
@@ -707,13 +710,16 @@ onUnmounted(() => {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 20px;
   height: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 16px;
   font-weight: bold;
+}
+.rank-change-text {
+  font-size: 12px;
+  margin-right: 2px;
 }
 .top-n-card:hover,
 .top-n-card.is-hovered {
@@ -753,10 +759,12 @@ onUnmounted(() => {
 }
 .amount-val {
   font-family: monospace;
-  font-weight: 500;
+  font-weight: bold;
+  font-size: 15px;
 }
 .amount-925 {
   color: #e6a23c; /* Orange/Gold */
+  font-size: 16px; /* Make 9:25 amount slightly larger */
 }
 .amount-920 {
   color: #409eff; /* Blue */
