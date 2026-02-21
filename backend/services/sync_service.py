@@ -176,6 +176,7 @@ class SyncService:
     def import_yesterday_limit_up_excel(file_path, date_str=None):
         """
         Import yesterday limit up data from Excel file.
+        Updates existing records for the same date and code, specifically updating consecutive_boards.
         """
         try:
             if not date_str:
@@ -186,49 +187,27 @@ class SyncService:
             
             # Identify columns dynamically
             code_col = None
-            name_col = None
-            reason_col = None
             consecutive_days_col = None
-            days_boards_col = None
-            limit_up_form_col = None
-            first_limit_up_time_col = None
-            last_limit_up_time_col = None
-            open_count_col = None
             
             for col in df.columns:
                 col_str = str(col)
                 if '股票代码' in col_str:
                     code_col = col
-                elif '股票简称' in col_str:
-                    name_col = col
-                elif '涨停原因类别' in col_str:
-                    reason_col = col
                 elif '连续涨停天数' in col_str:
                     consecutive_days_col = col
-                elif '几天几板' in col_str:
-                    days_boards_col = col
-                elif '涨停类型' in col_str:
-                    limit_up_form_col = col
-                elif '首次涨停时间' in col_str:
-                    first_limit_up_time_col = col
-                elif '最终涨停时间' in col_str:
-                    last_limit_up_time_col = col
-                elif '涨停开板次数' in col_str or '涨停开板数' in col_str:
-                    open_count_col = col
             
-            if not code_col or not name_col:
+            if not code_col or not consecutive_days_col:
                 logger.error(f"Missing required columns. Found: {df.columns.tolist()}")
                 return 0
             
-            # Clear existing data for the date
-            DatabaseManager.execute_update("DELETE FROM yesterday_limit_up WHERE date = %s", (date_str,))
-            
-            insert_query = """
-                INSERT INTO yesterday_limit_up 
-                (date, code, name, limit_up_type, consecutive_days, days_boards, limit_up_form, first_limit_up_time, last_limit_up_time, open_count) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            # Prepare update query
+            update_query = """
+                UPDATE yesterday_limit_up 
+                SET consecutive_boards = %s
+                WHERE date = %s AND code = %s
             """
-            data = []
+            
+            update_data = []
             
             for _, row in df.iterrows():
                 raw_code = str(row[code_col])
@@ -239,61 +218,26 @@ class SyncService:
                 
                 # Remove suffix like .SH or .SZ
                 code = raw_code.split('.')[0]
-                name = row[name_col]
                 
-                reason = ''
-                if reason_col:
-                    val = row[reason_col]
-                    if pd.notna(val):
-                        reason = str(val)
+                consecutive_boards = 0
+                val = row[consecutive_days_col]
+                if pd.notna(val):
+                    try:
+                        consecutive_boards = int(val)
+                    except:
+                        pass
                 
-                consecutive_days = 0
-                if consecutive_days_col:
-                    val = row[consecutive_days_col]
-                    if pd.notna(val):
-                        try:
-                            consecutive_days = int(val)
-                        except:
-                            pass
-                
-                days_boards = ''
-                if days_boards_col:
-                    val = row[days_boards_col]
-                    if pd.notna(val):
-                        days_boards = str(val)
-
-                limit_up_form = ''
-                if limit_up_form_col:
-                    val = row[limit_up_form_col]
-                    if pd.notna(val):
-                        limit_up_form = str(val)
-
-                first_limit_up_time = ''
-                if first_limit_up_time_col:
-                    val = row[first_limit_up_time_col]
-                    if pd.notna(val):
-                        first_limit_up_time = str(val)
-
-                last_limit_up_time = ''
-                if last_limit_up_time_col:
-                    val = row[last_limit_up_time_col]
-                    if pd.notna(val):
-                        last_limit_up_time = str(val)
-                
-                open_count = 0
-                if open_count_col:
-                    val = row[open_count_col]
-                    if pd.notna(val):
-                        try:
-                            open_count = int(val)
-                        except:
-                            pass
-                
-                data.append((date_str, code, name, reason, consecutive_days, days_boards, limit_up_form, first_limit_up_time, last_limit_up_time, open_count))
+                # Only update if we have valid data
+                if code:
+                    update_data.append((consecutive_boards, date_str, code))
             
-            count = DatabaseManager.execute_update(insert_query, data, many=True)
-            logger.info(f"Imported {count} yesterday limit up stocks from Excel for date {date_str}.")
-            return count
+            if update_data:
+                count = DatabaseManager.execute_update(update_query, update_data, many=True)
+                logger.info(f"Updated {count} yesterday limit up stocks with consecutive_boards from Excel for date {date_str}.")
+                return count
+            else:
+                logger.warning("No valid data found to update.")
+                return 0
             
         except Exception as e:
             logger.error(f"Error importing Excel: {e}")
