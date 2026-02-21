@@ -62,65 +62,65 @@
              </div>
 
              <!-- 9:25 Main List -->
-             <div style="flex: 2; display: flex; flex-direction: column; border-right: 1px solid #eee; padding-right: 10px; padding-left: 10px; height: 100%;">
-                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #e6a23c; flex-shrink: 0;">9:25 排名</div>
-                <div class="main-list" ref="mainListRef" @scroll="handleScroll('main')" style="flex: 1; overflow-y: auto;">
-                   <div v-for="(item, index) in topNList" :key="item.code" 
-                        class="top-n-card" 
+            <div style="flex: 2; display: flex; flex-direction: column; border-right: 1px solid #eee; padding-right: 10px; padding-left: 10px; height: 100%;">
+               <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #e6a23c; text-align: center; flex-shrink: 0;">9:25 排名</div>
+               <div class="main-list" ref="mainListRef" @scroll="handleScroll('main')" style="flex: 1; overflow-y: auto;">
+                  <div v-for="(item, index) in topNList" :key="item.code" 
+                       class="top-n-card" 
+                       :class="{ 'is-hovered': hoveredCode === item.code }"
+                       @mouseenter="handleMouseEnter(item.code)" 
+                       @mouseleave="handleMouseLeave">
+                     <div class="top-n-header">
+                        <span class="stock-name">{{ item.name }}</span>
+                        <span v-for="sec in getSortedSectors(item.sector).slice(0, 1)" :key="sec" class="stock-tag" :style="getHeatStyle(sec)">{{ sec }}</span>
+                        <span v-if="getBoardTagInfo(item)" 
+                              class="stock-tag" 
+                              :class="getBoardTagInfo(item).class">
+                          {{ getBoardTagInfo(item).text }}
+                        </span>
+                     </div>
+                     <div class="top-n-body">
+                        <span class="amount-val amount-925">{{ formatAmount(item.amount) }}</span>
+                        <span class="separator">|</span>
+                        <span class="amount-val amount-920">{{ formatAmount(item.amount_920) }}</span>
+                        <span class="separator">|</span>
+                        <span class="amount-val amount-915">{{ formatAmount(item.amount_915) }}</span>
+                        <span :class="getChangeClass(item.change_percent)" class="change-val">{{ formatChange(item.change_percent) }}</span>
+                     </div>
+                     
+                     <!-- Rank Change Indicator -->
+                     <div v-if="getRankChangeInfo(item.code, index)" 
+                          class="rank-change-indicator"
+                          :style="{ color: getRankChangeInfo(item.code, index).color }">
+                        <span class="rank-change-text">{{ getRankChangeInfo(item.code, index).text }}</span>
+                        <el-icon><component :is="getRankChangeInfo(item.code, index).icon" /></el-icon>
+                     </div>
+                  </div>
+                  <div v-if="topNList.length === 0" class="no-data">暂无数据</div>
+               </div>
+            </div>
+            
+            <!-- 9:20 List -->
+            <div style="flex: 1; display: flex; flex-direction: column; border-right: 1px solid #eee; padding: 0 10px; height: 100%;">
+               <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #409eff; text-align: center; flex-shrink: 0;">9:20 排名</div>
+               <div class="sub-list" ref="subList920Ref" @scroll="handleScroll('sub920')" style="flex: 1; overflow-y: auto;">
+                  <div v-for="(item, index) in ranking920List" :key="item.code" 
+                        class="mini-card"
                         :class="{ 'is-hovered': hoveredCode === item.code }"
                         @mouseenter="handleMouseEnter(item.code)" 
                         @mouseleave="handleMouseLeave">
-                      <div class="top-n-header">
-                         <span class="stock-name">{{ item.name }}</span>
-                         <span v-for="sec in getSortedSectors(item.sector).slice(0, 1)" :key="sec" class="stock-tag" :style="getHeatStyle(sec)">{{ sec }}</span>
-                         <span v-if="getBoardTagInfo(item)" 
-                               class="stock-tag" 
-                               :class="getBoardTagInfo(item).class">
-                           {{ getBoardTagInfo(item).text }}
-                         </span>
-                      </div>
-                      <div class="top-n-body">
-                         <span class="amount-val amount-925">{{ formatAmount(item.amount) }}</span>
-                         <span class="separator">|</span>
-                         <span class="amount-val amount-920">{{ formatAmount(item.amount_920) }}</span>
-                         <span class="separator">|</span>
-                         <span class="amount-val amount-915">{{ formatAmount(item.amount_915) }}</span>
-                         <span :class="getChangeClass(item.change_percent)" class="change-val">{{ formatChange(item.change_percent) }}</span>
-                      </div>
-                      
-                      <!-- Rank Change Indicator -->
-                      <div v-if="getRankChangeInfo(item.code, index)" 
-                           class="rank-change-indicator"
-                           :style="{ color: getRankChangeInfo(item.code, index).color }">
-                         <span class="rank-change-text">{{ getRankChangeInfo(item.code, index).text }}</span>
-                         <el-icon><component :is="getRankChangeInfo(item.code, index).icon" /></el-icon>
-                      </div>
-                   </div>
-                   <div v-if="topNList.length === 0" class="no-data">暂无数据</div>
-                </div>
-             </div>
-             
-             <!-- 9:20 List -->
-             <div style="flex: 1; display: flex; flex-direction: column; border-right: 1px solid #eee; padding: 0 10px; height: 100%;">
-                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #409eff; flex-shrink: 0;">9:20 排名</div>
-                <div class="sub-list" ref="subList920Ref" @scroll="handleScroll('sub920')" style="flex: 1; overflow-y: auto;">
-                   <div v-for="(item, index) in ranking920List" :key="item.code" 
-                         class="mini-card"
-                         :class="{ 'is-hovered': hoveredCode === item.code }"
-                         @mouseenter="handleMouseEnter(item.code)" 
-                         @mouseleave="handleMouseLeave">
-                      <div class="mini-row" style="margin-bottom: 0;">
-                          <span class="mini-name">{{ item.name }}</span>
-                      </div>
-                   </div>
-                   <div v-if="ranking920List.length === 0" class="no-data">暂无数据</div>
-                </div>
-             </div>
- 
-             <!-- 9:15 List -->
-             <div style="flex: 1; display: flex; flex-direction: column; padding-left: 10px; height: 100%;">
-                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #f56c6c; flex-shrink: 0;">9:15 排名</div>
-                <div class="sub-list" ref="subList915Ref" @scroll="handleScroll('sub915')" style="flex: 1; overflow-y: auto;">
+                     <div class="mini-row" style="margin-bottom: 0;">
+                         <span class="mini-name">{{ item.name }}</span>
+                     </div>
+                  </div>
+                  <div v-if="ranking920List.length === 0" class="no-data">暂无数据</div>
+               </div>
+            </div>
+
+            <!-- 9:15 List -->
+            <div style="flex: 1; display: flex; flex-direction: column; padding-left: 10px; height: 100%;">
+               <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #f56c6c; text-align: center; flex-shrink: 0;">9:15 排名</div>
+               <div class="sub-list" ref="subList915Ref" @scroll="handleScroll('sub915')" style="flex: 1; overflow-y: auto;">
                    <div v-for="(item, index) in ranking915List" :key="item.code" 
                          class="mini-card"
                          :class="{ 'is-hovered': hoveredCode === item.code }"
