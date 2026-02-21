@@ -47,47 +47,86 @@
             </div>
           </template>
           <div class="monitor-container" style="display: flex; height: calc(100vh - 180px);">
-             <!-- 9:25 Main List -->
-             <div class="main-list" style="flex: 1.5; overflow-y: auto; padding-right: 10px; border-right: 1px solid #eee;">
-                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #e6a23c;">9:25 排名</div>
-                <div v-for="item in topNList" :key="item.code" class="top-n-card">
-                   <div class="top-n-header">
-                      <span class="stock-name">{{ item.name }}</span>
-                      <span v-for="sec in getSortedSectors(item.sector).slice(0, 1)" :key="sec" class="stock-tag" :style="getHeatStyle(sec)">{{ sec }}</span>
-                      <span v-if="item.consecutive_days > 1" class="stock-tag board-tag">{{ item.consecutive_days }}板</span>
-                   </div>
-                   <div class="top-n-body">
-                      <span class="amount-val amount-925">{{ formatAmount(item.amount) }}</span>
-                      <span class="separator">|</span>
-                      <span class="amount-val amount-920">{{ formatAmount(item.amount_920) }}</span>
-                      <span class="separator">|</span>
-                      <span class="amount-val amount-915">{{ formatAmount(item.amount_915) }}</span>
-                      <span :class="getChangeClass(item.change_percent)" class="change-val">{{ formatChange(item.change_percent) }}</span>
+             <!-- Rank Column -->
+             <div style="flex: 0 0 50px; display: flex; flex-direction: column; border-right: 1px solid #eee; height: 100%;">
+                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #909399; text-align: center; flex-shrink: 0;">序号</div>
+                <div class="rank-list sub-list" ref="rankListRef" @scroll="handleScroll('rank')" style="flex: 1; overflow-y: auto;">
+                   <div v-for="(item, index) in topNList" :key="'rank-' + index" 
+                        class="rank-card"
+                        :class="{ 'is-hovered': hoveredCode === item.code }"
+                        @mouseenter="handleMouseEnter(item.code)" 
+                        @mouseleave="handleMouseLeave">
+                      <div class="rank-number" :class="getRankClass(index)">{{ index + 1 }}</div>
                    </div>
                 </div>
-                <div v-if="topNList.length === 0" class="no-data">暂无数据</div>
+             </div>
+
+             <!-- 9:25 Main List -->
+             <div style="flex: 2; display: flex; flex-direction: column; border-right: 1px solid #eee; padding-right: 10px; padding-left: 10px; height: 100%;">
+                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #e6a23c; flex-shrink: 0;">9:25 排名</div>
+                <div class="main-list" ref="mainListRef" @scroll="handleScroll('main')" style="flex: 1; overflow-y: auto;">
+                   <div v-for="(item, index) in topNList" :key="item.code" 
+                        class="top-n-card" 
+                        :class="{ 'is-hovered': hoveredCode === item.code }"
+                        @mouseenter="handleMouseEnter(item.code)" 
+                        @mouseleave="handleMouseLeave">
+                      <div class="top-n-header">
+                         <span class="stock-name">{{ item.name }}</span>
+                         <span v-for="sec in getSortedSectors(item.sector).slice(0, 1)" :key="sec" class="stock-tag" :style="getHeatStyle(sec)">{{ sec }}</span>
+                         <span v-if="item.consecutive_days > 1" class="stock-tag board-tag">{{ item.consecutive_days }}板</span>
+                      </div>
+                      <div class="top-n-body">
+                         <span class="amount-val amount-925">{{ formatAmount(item.amount) }}</span>
+                         <span class="separator">|</span>
+                         <span class="amount-val amount-920">{{ formatAmount(item.amount_920) }}</span>
+                         <span class="separator">|</span>
+                         <span class="amount-val amount-915">{{ formatAmount(item.amount_915) }}</span>
+                         <span :class="getChangeClass(item.change_percent)" class="change-val">{{ formatChange(item.change_percent) }}</span>
+                      </div>
+                      
+                      <!-- Rank Change Indicator -->
+                      <div v-if="getRankChangeInfo(item.code, index)" 
+                           class="rank-change-indicator"
+                           :style="{ color: getRankChangeInfo(item.code, index).color }">
+                         <el-icon><component :is="getRankChangeInfo(item.code, index).icon" /></el-icon>
+                      </div>
+                   </div>
+                   <div v-if="topNList.length === 0" class="no-data">暂无数据</div>
+                </div>
              </div>
              
              <!-- 9:20 List -->
-             <div class="sub-list" style="flex: 1; overflow-y: auto; padding: 0 10px; border-right: 1px solid #eee;">
-                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #409eff;">9:20 排名</div>
-                <div v-for="(item, index) in ranking920List" :key="item.code" class="mini-card">
-                   <div class="mini-row" style="justify-content: center; margin-bottom: 0;">
-                       <span class="mini-name">{{ item.name }}</span>
+             <div style="flex: 1; display: flex; flex-direction: column; border-right: 1px solid #eee; padding: 0 10px; height: 100%;">
+                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #409eff; flex-shrink: 0;">9:20 排名</div>
+                <div class="sub-list" ref="subList920Ref" @scroll="handleScroll('sub920')" style="flex: 1; overflow-y: auto;">
+                   <div v-for="(item, index) in ranking920List" :key="item.code" 
+                         class="mini-card"
+                         :class="{ 'is-hovered': hoveredCode === item.code }"
+                         @mouseenter="handleMouseEnter(item.code)" 
+                         @mouseleave="handleMouseLeave">
+                      <div class="mini-row" style="margin-bottom: 0;">
+                          <span class="mini-name">{{ item.name }}</span>
+                      </div>
                    </div>
+                   <div v-if="ranking920List.length === 0" class="no-data">暂无数据</div>
                 </div>
-                <div v-if="ranking920List.length === 0" class="no-data">暂无数据</div>
              </div>
-
+ 
              <!-- 9:15 List -->
-             <div class="sub-list" style="flex: 1; overflow-y: auto; padding-left: 10px;">
-                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #f56c6c;">9:15 排名</div>
-                <div v-for="(item, index) in ranking915List" :key="item.code" class="mini-card">
-                   <div class="mini-row" style="justify-content: center; margin-bottom: 0;">
-                       <span class="mini-name">{{ item.name }}</span>
+             <div style="flex: 1; display: flex; flex-direction: column; padding-left: 10px; height: 100%;">
+                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #f56c6c; flex-shrink: 0;">9:15 排名</div>
+                <div class="sub-list" ref="subList915Ref" @scroll="handleScroll('sub915')" style="flex: 1; overflow-y: auto;">
+                   <div v-for="(item, index) in ranking915List" :key="item.code" 
+                         class="mini-card"
+                         :class="{ 'is-hovered': hoveredCode === item.code }"
+                         @mouseenter="handleMouseEnter(item.code)" 
+                         @mouseleave="handleMouseLeave">
+                      <div class="mini-row" style="margin-bottom: 0;">
+                          <span class="mini-name">{{ item.name }}</span>
+                      </div>
                    </div>
+                   <div v-if="ranking915List.length === 0" class="no-data">暂无数据</div>
                 </div>
-                <div v-if="ranking915List.length === 0" class="no-data">暂无数据</div>
              </div>
           </div>
         </el-card>
@@ -157,6 +196,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import axios from 'axios'
+import { CaretTop, CaretBottom } from '@element-plus/icons-vue'
 
 const topNList = ref([])
 const ranking920List = ref([])
@@ -165,6 +205,64 @@ const yesterdayLimitUpList = ref([])
 const limitUp925List = ref([])
 const autoRefresh = ref(true)
 const refreshInterval = ref(5000)
+
+// Refs for scroll synchronization
+const rankListRef = ref(null)
+const mainListRef = ref(null)
+const subList920Ref = ref(null)
+const subList915Ref = ref(null)
+
+// Hover state
+const hoveredCode = ref(null)
+
+const handleMouseEnter = (code) => {
+  hoveredCode.value = code
+}
+
+const handleMouseLeave = () => {
+  hoveredCode.value = null
+}
+
+const scrollLock = ref(null)
+const scrollLockTimer = ref(null)
+
+const handleScroll = (region) => {
+  if (scrollLock.value && scrollLock.value !== region) return
+  
+  // Acquire lock
+  scrollLock.value = region
+  clearTimeout(scrollLockTimer.value)
+  scrollLockTimer.value = setTimeout(() => {
+    scrollLock.value = null
+  }, 100) // 100ms release time
+
+  const refs = {
+    rank: rankListRef.value,
+    main: mainListRef.value,
+    sub920: subList920Ref.value,
+    sub915: subList915Ref.value
+  }
+  
+  const source = refs[region]
+  if (!source) return
+  
+  const maxScroll = source.scrollHeight - source.clientHeight
+  if (maxScroll <= 0) return
+  
+  const percentage = source.scrollTop / maxScroll
+  
+  Object.keys(refs).forEach(key => {
+    if (key !== region) {
+      const target = refs[key]
+      if (target) {
+        const targetMax = target.scrollHeight - target.clientHeight
+        if (targetMax > 0) {
+           target.scrollTop = percentage * targetMax
+        }
+      }
+    }
+  })
+}
 
 // Computed property for grouping yesterday limit up data
 const groupedYesterdayLimitUp = computed(() => {
@@ -214,6 +312,14 @@ const maxSectorCount = computed(() => {
   const counts = Object.values(sectorFrequency.value)
   return counts.length ? Math.max(...counts) : 0
 })
+
+const getRankClass = (index) => {
+  if (index === 0) return 'rank-top-1'
+  if (index === 1) return 'rank-top-2'
+  if (index === 2) return 'rank-top-3'
+  if (index < 10) return 'rank-top-10'
+  return ''
+}
 
 const getSortedSectors = (sectorStr) => {
   const sectors = splitSector(sectorStr)
@@ -280,6 +386,33 @@ const getHeatStyle = (sectorName) => {
           fontWeight: 'bold'
       }
   }
+}
+
+const rank915Map = computed(() => {
+  const map = {}
+  if (ranking915List.value) {
+    ranking915List.value.forEach((item, index) => {
+      map[item.code] = index
+    })
+  }
+  return map
+})
+
+const getRankChangeInfo = (code, currentRank) => {
+  const rank915 = rank915Map.value[code]
+  
+  if (rank915 === undefined) return null
+  
+  // currentRank is 0-based. Lower index = Higher rank.
+  if (currentRank < rank915) {
+    // Rank improved (e.g., 2 < 5) -> Red Up
+    return { icon: CaretTop, color: '#f56c6c' }
+  } else if (currentRank > rank915) {
+    // Rank declined (e.g., 5 > 2) -> Green Down
+    return { icon: CaretBottom, color: '#67c23a' }
+  }
+  
+  return null
 }
 
 const formatChange = (val) => {
@@ -523,6 +656,20 @@ onUnmounted(() => {
 .dashboard-container {
   padding: 20px;
 }
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.main-list::-webkit-scrollbar,
+.sub-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.main-list,
+.sub-list {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 .actions-bar {
   margin-bottom: 20px;
   display: flex;
@@ -544,6 +691,7 @@ onUnmounted(() => {
   padding: 5px;
 }
 .top-n-card {
+  position: relative;
   padding: 8px;
   border: 1px solid #ebeef5;
   border-radius: 4px;
@@ -552,11 +700,27 @@ onUnmounted(() => {
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   transition: all 0.2s;
   font-weight: 600;
+  height: 60px; /* Fixed height for consistency */
+  box-sizing: border-box;
 }
-.top-n-card:hover {
+.rank-change-indicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  font-weight: bold;
+}
+.top-n-card:hover,
+.top-n-card.is-hovered {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  border-color: #c6e2ff;
+  border-color: #e6a23c;
+  background-color: #fdf6ec;
 }
 .top-n-header {
   display: flex;
@@ -659,21 +823,83 @@ onUnmounted(() => {
   border-color: #d9ecff;
 }
 
+/* Rank Card */
+.rank-card {
+  height: 60px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #ebeef5;
+  background-color: #fff;
+  margin-bottom: 6px;
+  transition: all 0.2s;
+}
+
+.rank-card.is-hovered {
+  background-color: #fdf6ec;
+  border-color: #e6a23c;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+  z-index: 1;
+  position: relative;
+}
+
+.rank-number {
+    font-size: 14px;
+    font-weight: bold;
+    color: #909399;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    border-radius: 4px;
+  }
+  
+  .rank-number.rank-top-1 {
+    color: #fff;
+    background-color: #f56c6c;
+  }
+  
+  .rank-number.rank-top-2 {
+    color: #fff;
+    background-color: #e6a23c;
+  }
+  
+  .rank-number.rank-top-3 {
+    color: #fff;
+    background-color: #faad14;
+  }
+  
+  .rank-number.rank-top-10 {
+    color: #303133;
+    font-weight: 900;
+    font-size: 16px;
+  }
+
+/* 9:20 and 9:15 Card Style */
 .mini-card {
   padding: 6px;
   border: 1px solid #ebeef5;
   border-radius: 4px;
-  margin-bottom: 4px;
+  margin-bottom: 6px; /* Match top-n-card margin-bottom */
   background: #fff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   transition: all 0.2s;
   font-size: 15px;
   font-weight: 600;
+  height: 60px; /* Match top-n-card height */
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.mini-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-  border-color: #c6e2ff;
+.mini-card:hover,
+.mini-card.is-hovered {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: #e6a23c;
+  background-color: #fdf6ec;
 }
 .mini-row {
   display: flex;
