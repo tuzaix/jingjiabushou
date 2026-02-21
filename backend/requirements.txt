@@ -1,0 +1,7 @@
+flask
+mysql-connector-python
+apscheduler
+akshare
+requests
+pandas
+flask-cors
