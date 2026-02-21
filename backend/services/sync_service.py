@@ -42,7 +42,7 @@ class SyncService:
             return []
 
     @staticmethod
-    def fetch_call_auction_data(stock_list_data=None):
+    def fetch_call_auction_data(stock_list_data=None, date_str=None):
         if not stock_list_data:
             try:
                 stock_list_data = DatabaseManager.execute_query("SELECT code, name, market FROM stock_list", dictionary=False)
@@ -102,7 +102,7 @@ class SyncService:
                     
                     logger.info(f"Received {len(data_list) if data_list else 0} records from API.")
                     if data_list:
-                        SyncService.save_call_auction_data(data_list)
+                        SyncService.save_call_auction_data(data_list, date_str)
                     else:
                         logger.warning(f"Data list is empty. Data keys: {data_obj.keys()}")
                 else:
@@ -113,10 +113,25 @@ class SyncService:
             logger.error(f"Error fetching data: {e}")
 
     @staticmethod
-    def save_call_auction_data(data):
+    def save_call_auction_data(data, date_str=None):
         try:
-            current_date = datetime.date.today()
-            current_time = datetime.datetime.now().time()
+            if date_str:
+                current_date = date_str
+            else:
+                current_date = datetime.date.today()
+                
+            now = datetime.datetime.now()
+            current_time = now.time()
+            current_time_str = now.strftime('%H:%M:%S')
+            
+            # Logic: 9:15 - 9:25 -> use actual time, else -> 9:25:00
+            if '09:15:00' <= current_time_str <= '09:25:00':
+                record_time = current_time_str
+            else:
+                # If we are strictly within market hours logic, we should probably stick to actual time
+                # But if we are running catch-up or testing, we might want 09:25:00
+                # Let's use 09:25:00 if outside the window, similar to fetch_eastmoney_call_auction logic
+                record_time = '09:25:00'
             
             insert_query = """
             INSERT INTO call_auction_data 
@@ -143,20 +158,23 @@ class SyncService:
                 ask1_vol = 0
                 rank = idx + 1
                 
-                db_data.append((current_date, current_time, code, name, price, change_percent, volume, amount, bid1_vol, ask1_vol, rank))
+                db_data.append((current_date, record_time, code, name, price, change_percent, volume, amount, bid1_vol, ask1_vol, rank))
                 
             count = DatabaseManager.execute_update(insert_query, db_data, many=True)
-            logger.info(f"Saved {count} call auction records.")
+            logger.info(f"Saved {count} call auction records for date {current_date} time {record_time}.")
         except Exception as e:
             logger.error(f"Error saving data: {e}")
 
     @staticmethod
-    def fetch_yesterday_limit_up():
+    def fetch_yesterday_limit_up(date_str=None):
         try:
-            today = datetime.date.today()
-            df = ak.stock_zt_pool_previous_em(date=today.strftime("%Y%m%d"))
+            if not date_str:
+                date_str = datetime.date.today().strftime('%Y-%m-%d')
+                
+            date_param = date_str.replace('-', '')
+            df = ak.stock_zt_pool_previous_em(date=date_param)
             
-            DatabaseManager.execute_update("DELETE FROM yesterday_limit_up WHERE date = %s", (today,))
+            DatabaseManager.execute_update("DELETE FROM yesterday_limit_up WHERE date = %s", (date_str,))
             
             insert_query = "INSERT INTO yesterday_limit_up (date, code, name, limit_up_type) VALUES (%s, %s, %s, %s)"
             data = []
@@ -164,10 +182,10 @@ class SyncService:
                 code = row['代码']
                 name = row['名称']
                 reason = row['涨停原因类别'] if '涨停原因类别' in row else ''
-                data.append((today, code, name, reason))
+                data.append((date_str, code, name, reason))
                 
             count = DatabaseManager.execute_update(insert_query, data, many=True)
-            logger.info(f"Saved {count} yesterday limit up stocks.")
+            logger.info(f"Saved {count} yesterday limit up stocks for date {date_str}.")
             
         except Exception as e:
             logger.error(f"Error fetching yesterday limit up: {e}")

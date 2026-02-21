@@ -5,6 +5,7 @@ import datetime
 import logging
 import os
 import time
+from utils.date_utils import get_current_or_previous_trading_day
 
 logger = logging.getLogger(__name__)
 
@@ -15,16 +16,37 @@ def job_fetch_call_auction():
     end_time = datetime.time(9, 31)
     
     if (start_time <= now <= end_time):
-        tasks.fetch_call_auction_data()
+        trading_day = get_current_or_previous_trading_day()
+        # Only fetch if today matches the trading day, OR if we want to allow re-fetching past data?
+        # If today is Saturday, trading_day is Friday.
+        # If we run this on Saturday 9:20, we fetch Friday's data and save as Friday.
+        # This seems acceptable.
+        tasks.fetch_call_auction_data(date_str=trading_day)
 
 def job_daily_update():
     logger.info("Starting daily update job")
+    trading_day = get_current_or_previous_trading_day()
+    logger.info(f"Executing job_daily_update for date: {trading_day}")
+    
     tasks.get_all_stock_codes()
-    tasks.fetch_yesterday_limit_up()
+    tasks.fetch_yesterday_limit_up(date_str=trading_day)
 
 def job_fetch_jiuyan():
     logger.info("Starting Jiuyan data fetch job")
-    tasks.fetch_jiuyan_data()
+    trading_day = get_current_or_previous_trading_day()
+    logger.info(f"Executing job_fetch_jiuyan for date: {trading_day}")
+    
+    tasks.fetch_jiuyan_data(date_str=trading_day)
+
+def job_fetch_eastmoney_call_auction():
+    """
+    Fetch Eastmoney call auction data.
+    Runs every few seconds during 9:15-9:30.
+    """
+    trading_day = get_current_or_previous_trading_day()
+    logger.info(f"Executing job_fetch_eastmoney_call_auction for date: {trading_day}")
+    
+    tasks.fetch_eastmoney_call_auction(dry_run=True, date_str=trading_day)
 
 def start_scheduler(blocking=False):
     if blocking:
@@ -34,7 +56,12 @@ def start_scheduler(blocking=False):
         
     # Schedule jobs
     
-    scheduler.add_job(job_fetch_call_auction, 'cron', day_of_week='mon-fri', hour=9, minute='15-30', second=0)
+    # Existing job (maybe disable or keep?)
+    # scheduler.add_job(job_fetch_call_auction, 'cron', day_of_week='mon-fri', hour=9, minute='15-30', second=0)
+    
+    # New Eastmoney job - runs every 10 seconds from 9:15 to 9:30
+    scheduler.add_job(job_fetch_eastmoney_call_auction, 'cron', day_of_week='mon-fri', hour=9, minute='15-30', second='*/10')
+
     scheduler.add_job(job_daily_update, 'cron', day_of_week='mon-fri', hour=9, minute=0)
     
     # Schedule Jiuyan fetch daily at 17:00
