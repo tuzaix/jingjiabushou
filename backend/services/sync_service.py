@@ -5,6 +5,7 @@ import akshare as ak
 import pandas as pd
 import logging
 from utils.database import DatabaseManager
+from .eastmoney_service import EastmoneyService
 
 logger = logging.getLogger(__name__)
 
@@ -73,28 +74,44 @@ class SyncService:
             logger.warning("No secids generated.")
             return
 
-        url = 'https://push2dycalc.eastmoney.com/api/qt/ulist.np/post'
-        fields = "f2,f3,f4,f5,f6,f10,f12,f13,f14,f100,f265,f608,f615,f616,f617,f618,f619,f620,f629,f630,f637,f638,f639,f641"
-        
-        logger.info(f"Fetching data for {len(secids)} stocks in a single request.")
-
-        payload = {
-            "fltt": 2,
-            "secids": secids,
-            "fields": fields,
-            "fid": "f615",
-            "po": 1,
-            "pn": 1,
-            "pz": 200,
-            "ut": "c92c50e6b0fab2c17cd5e276e9a79c42"
-        }
-        
+        # Get configuration from database
         try:
-            # Increase timeout for large payload
-            response = requests.post(url, headers=HEADERS, json=payload, timeout=10)
+            config = EastmoneyService.get_config()
+            if not config:
+                logger.error("No Eastmoney configuration found. Please configure cURL in the backend.")
+                return
+
+            url = config.get('url')
+            if not url:
+                logger.error("Configuration URL is missing.")
+                return
+
+            headers = config.get('headers', {})
+            
+            # Prepare payload from config
+            payload = config.get('body', {})
+            
+            # Ensure payload is a dictionary to allow updates
+            if not isinstance(payload, dict):
+                logger.error(f"Configuration body must be a JSON object, got {type(payload)}. Please check the cURL configuration.")
+                return
+
+            # Update payload with dynamic values
+            # We must override secids to fetch the current list of stocks
+            payload['secids'] = secids
+            # We must override pz (page size) to fetch all stocks in one go
+            payload['pz'] = len(secids)
+            # Ensure we start from page 1
+            payload['pn'] = 1
+            
+            logger.info(f"Fetching data using configured URL: {url}")
+            logger.info(f"Payload overrides: pz={payload['pz']}, secids count={len(secids)}")
+
+            # Execute request
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
+            
             if response.status_code == 200:
                 res_json = response.json()
-                # logger.info(f"Response keys: {res_json.keys() if res_json else 'None'}")
                 if res_json and 'data' in res_json and res_json['data']:
                     data_obj = res_json['data']
                     # Some endpoints return 'diff', others might return 'full' or other keys
@@ -109,8 +126,9 @@ class SyncService:
                     logger.warning(f"No data found in response. Keys: {res_json.keys() if res_json else 'None'}. Data: {str(res_json)[:200]}...")
             else:
                 logger.error(f"Failed to fetch data: {response.status_code}")
+                
         except Exception as e:
-            logger.error(f"Error fetching data: {e}")
+            logger.error(f"Error fetching data with configuration: {e}")
 
     @staticmethod
     def save_call_auction_data(data, date_str=None):
@@ -135,8 +153,8 @@ class SyncService:
             
             insert_query = """
             INSERT INTO call_auction_data 
-            (date, time, code, name, price, change_percent, volume, amount, bid1_vol, ask1_vol, `rank`)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (date, time, code, name, sector, price, bidding_percent, bidding_amount, asking_amount)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             
             def get_val(item, key, default=0):
@@ -144,21 +162,31 @@ class SyncService:
                 if val == '-': return default
                 return val
 
-            data.sort(key=lambda x: float(get_val(x, 'f6', 0)), reverse=True)
+            # Sort by auction amount (f616)
+            data.sort(key=lambda x: float(get_val(x, 'f616', 0)), reverse=True)
             
             db_data = []
+            
             for idx, item in enumerate(data):
                 code = item.get('f12', '')
                 name = item.get('f14', '')
-                price = get_val(item, 'f2', 0)
-                change_percent = get_val(item, 'f3', 0)
-                volume = get_val(item, 'f5', 0)
-                amount = get_val(item, 'f6', 0)
-                bid1_vol = 0
-                ask1_vol = 0
-                rank = idx + 1
+                sector = item.get('f100', '') # f100: Sector/Concept
                 
-                db_data.append((current_date, record_time, code, name, price, change_percent, volume, amount, bid1_vol, ask1_vol, rank))
+                # f2: Latest Price
+                price = get_val(item, 'f2', 0)
+                
+                # f615: Auction Increase (bidding_percent)
+                bidding_percent = get_val(item, 'f615', 0)
+                
+                # f616: Auction Amount (bidding_amount)
+                bidding_amount = get_val(item, 'f616', 0)
+                
+                # f618: Unmatched Amount (asking_amount)
+                # Note: f618 is "Bid Unmatched Amount" (Limit Up Bid Amount)
+                # We map it to asking_amount as per table schema availability
+                asking_amount = get_val(item, 'f618', 0) + bidding_amount
+                
+                db_data.append((current_date, record_time, code, name, sector, price, bidding_percent, bidding_amount, asking_amount))
                 
             count = DatabaseManager.execute_update(insert_query, db_data, many=True)
             logger.info(f"Saved {count} call auction records for date {current_date} time {record_time}.")
