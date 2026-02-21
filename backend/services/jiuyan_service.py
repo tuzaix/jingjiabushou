@@ -160,8 +160,8 @@ class JiuyanService:
             
             insert_query = """
                 INSERT INTO yesterday_limit_up 
-                (date, code, name, limit_up_type, consecutive_days, days_boards, limit_up_form, first_limit_up_time, last_limit_up_time, open_count) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                (date, code, name, limit_up_type, consecutive_days, days_boards, limit_up_form, first_limit_up_time, last_limit_up_time, open_count, expound, consecutive_boards) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             
             stock_map = {}
@@ -181,19 +181,26 @@ class JiuyanService:
                         article = stock.get('article', {}) or {}
                         action_info = article.get('action_info', {}) or {}
                         
+                        # 解析连续天数和板数
                         num_str = action_info.get('num', '') # "3天3板"
+                        # 解析涨停时间
                         limit_up_time = action_info.get('time', '') # "09:25:00"
                         
-                        # Parse consecutive days
-                        consecutive_days = 1
-                        if num_str:
-                            match = re.search(r'(\d+)天', num_str) or re.search(r'(\d+)连板', num_str)
-                            if match:
-                                consecutive_days = int(match.group(1))
-                            elif '首板' in num_str:
-                                consecutive_days = 1
-                        
+                        # 解析连续天数
+                        try:
+                            consecutive_days = int(action_info.get('day', 1))
+                        except:
+                            consecutive_days = 1
+                        # 解析连续板数
+                        try:
+                            consecutive_boards = int(action_info.get('edition', 1))
+                        except:
+                            consecutive_boards = 1
+                        # 几天几板
                         days_boards = num_str if num_str else '首板'
+
+                        # 解析扩展信息
+                        expound = action_info.get('expound', '')
                         
                         stock_map[code] = {
                             'date': date_str,
@@ -205,7 +212,9 @@ class JiuyanService:
                             'limit_up_form': '',
                             'first_time': limit_up_time,
                             'last_time': limit_up_time,
-                            'open_count': 0
+                            'open_count': 0,
+                            'expound': expound,
+                            'consecutive_boards': consecutive_boards
                         }
                     else:
                         if category not in stock_map[code]['categories']:
@@ -228,7 +237,9 @@ class JiuyanService:
                     info['limit_up_form'],
                     info['first_time'],
                     info['last_time'],
-                    info['open_count']
+                    info['open_count'],
+                    info['expound'],
+                    info['consecutive_boards']
                 ))
                 
             count = DatabaseManager.execute_update(insert_query, final_data, many=True)
