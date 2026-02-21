@@ -146,8 +146,8 @@
           </template>
           <!-- Custom Layout for Yesterday Limit Up Performance -->
           <div class="yesterday-limit-up-container" style="height: calc(100vh - 180px); overflow-y: auto; padding: 20px;">
-             <div v-for="group in groupedYesterdayLimitUp" :key="group.days" class="limit-up-group">
-                <div class="group-label">{{ group.days }}板</div>
+             <div v-for="group in groupedYesterdayLimitUp" :key="group.boards" class="limit-up-group">
+                <div class="group-label">{{ group.boards }}板</div>
                 <div class="group-items">
                    <div v-for="item in group.items" :key="item.code" class="stock-card">
                       <div class="stock-name">{{ item.name }}</div>
@@ -275,7 +275,7 @@ const groupedYesterdayLimitUp = computed(() => {
   
   const groups = {}
   yesterdayLimitUpList.value.forEach(item => {
-    const key = item.consecutive_days
+    const key = item.consecutive_boards
     if (!groups[key]) {
       groups[key] = []
     }
@@ -284,18 +284,18 @@ const groupedYesterdayLimitUp = computed(() => {
   
   // Convert to array and sort by days descending
   const result = Object.keys(groups).map(key => ({
-    days: parseInt(key),
+    boards: parseInt(key),
     items: groups[key]
   }))
   
-  return result.sort((a, b) => b.days - a.days)
+  return result.sort((a, b) => b.boards - a.boards)
 })
 
 const splitSector = (sectorStr) => {
   if (!sectorStr) return []
   // Split by common delimiters: space, comma, semicolon, enumeration comma (English or Chinese)
   // Filter out empty strings
-  return sectorStr.split(/[\s,;，；、]+/).filter(s => s && s.trim().length > 0)
+  return sectorStr.split(/[\s,;；、]+/).filter(s => s && s.trim().length > 0)
 }
 
 // Compute frequency of each sector in the Top N list

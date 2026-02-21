@@ -222,7 +222,7 @@ class MarketService:
         query = """
         SELECT * FROM yesterday_limit_up 
         WHERE date = %s 
-          AND consecutive_days >= 2 
+          AND consecutive_boards >= 2 
           AND name NOT LIKE '%%ST%%'
         """
         try:
@@ -287,10 +287,10 @@ class MarketService:
         # Filter: consecutive_days >= 2, no ST
         # Also select first_limit_up_time for sorting
         query_limit_up = """
-        SELECT code, name, consecutive_days, limit_up_type, first_limit_up_time 
+        SELECT code, name, consecutive_days, consecutive_boards, limit_up_type, first_limit_up_time 
         FROM yesterday_limit_up 
         WHERE date = %s 
-          AND consecutive_days >= 2 
+          AND consecutive_boards >= 2 
           AND name NOT LIKE '%%ST%%'
         """
         
@@ -309,7 +309,7 @@ class MarketService:
             # Updated to match new schema: bidding_percent, asking_amount
             # Mapping: bidding_percent -> change_percent, asking_amount -> amount
             query_auction = f"""
-            SELECT code, bidding_percent as change_percent, asking_amount as amount 
+            SELECT code, bidding_percent as change_percent, asking_amount as amount
             FROM call_auction_data 
             WHERE date = %s 
               AND time >= '09:25:00' AND time < '09:26:00'
@@ -339,6 +339,7 @@ class MarketService:
                     'code': code,
                     'name': stock['name'],
                     'consecutive_days': stock['consecutive_days'],
+                    'consecutive_boards': stock['consecutive_boards'],
                     'sector': stock['limit_up_type'], # Using limit_up_type as sector
                     'first_limit_up_time': first_time,
                     'change_percent': auction.get('change_percent'),
@@ -349,7 +350,7 @@ class MarketService:
             # Sort by consecutive_days desc, then first_limit_up_time asc
             # Note: first_limit_up_time might be None, handle that
             result.sort(key=lambda x: (
-                -x['consecutive_days'], 
+                -x['consecutive_boards'], 
                 x['first_limit_up_time'] if x['first_limit_up_time'] else '23:59:59'
             ))
             
