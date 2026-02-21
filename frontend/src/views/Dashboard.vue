@@ -73,7 +73,11 @@
                       <div class="top-n-header">
                          <span class="stock-name">{{ item.name }}</span>
                          <span v-for="sec in getSortedSectors(item.sector).slice(0, 1)" :key="sec" class="stock-tag" :style="getHeatStyle(sec)">{{ sec }}</span>
-                         <span v-if="item.consecutive_days > 1" class="stock-tag board-tag">{{ item.consecutive_days }}板</span>
+                         <span v-if="getBoardTagInfo(item)" 
+                               class="stock-tag" 
+                               :class="getBoardTagInfo(item).class">
+                           {{ getBoardTagInfo(item).text }}
+                         </span>
                       </div>
                       <div class="top-n-body">
                          <span class="amount-val amount-925">{{ formatAmount(item.amount) }}</span>
@@ -418,6 +422,38 @@ const getRankChangeInfo = (code, currentRank) => {
   return null
 }
 
+const limitUp925Set = computed(() => {
+  const set = new Set()
+  if (limitUp925List.value) {
+    limitUp925List.value.forEach(item => set.add(item.code))
+  }
+  return set
+})
+
+const getBoardTagInfo = (item) => {
+   // Check if currently limit up (at 9:25)
+   // Rely strictly on limitUp925Set for 9:25 limit up status as requested by user.
+   // Fallback logic is removed to avoid incorrect "First Board" labeling for non-limit-up stocks.
+   const isLimitUp = limitUp925Set.value.has(item.code)
+   
+   const prevDays = item.consecutive_days || 0
+  
+  if (isLimitUp) {
+    if (prevDays === 0) {
+      return { text: '首板', class: 'board-tag' }
+    } else {
+      return { text: (prevDays + 1) + '板', class: 'board-tag' }
+    }
+  } else {
+    // Not limit up now
+    if (prevDays > 0) {
+      return { text: '昨' + prevDays + '板', class: 'broken-board-tag' }
+    }
+  }
+  
+  return null
+}
+
 const formatChange = (val) => {
   if (val === undefined || val === null) return '-'
   return val > 0 ? `+${val}%` : `${val}%`
@@ -750,6 +786,11 @@ onUnmounted(() => {
   background-color: #fef0f0;
   color: #f56c6c;
   border: 1px solid #fde2e2;
+}
+.broken-board-tag {
+  background-color: #f4f4f5;
+  color: #909399;
+  border: 1px solid #e9e9eb;
 }
 .top-n-body {
   display: flex;

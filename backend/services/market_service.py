@@ -358,11 +358,8 @@ class MarketService:
         # if cached_data:
         #     return cached_data
 
-        # We look for records at 09:25:xx with change_percent >= 9.9
-        # Since exact second might vary, we check the minute 09:25
-        # Updated to match new schema: bidding_percent, bidding_amount
-        # Mapping: bidding_percent -> change_percent, bidding_amount -> amount
-        # price is not available in new schema, returning 0
+        # We look for records at 09:25:xx with change_percent meeting limit up criteria
+        # Main board: >= 9.8%, ChiNext/STAR (300/688): >= 19.8%, ST: >= 4.9%, BJ (8/4/9): >= 29.8%
         query = """
         SELECT code, name, sector,
                bidding_percent as change_percent, 
@@ -370,7 +367,19 @@ class MarketService:
                0 as price, 
                time, date
         FROM call_auction_data 
-        WHERE date = %s AND time >= '09:25:00' AND time < '09:26:00' 
+        WHERE date = %s 
+          AND time >= '09:25:00' AND time < '09:26:00' 
+          AND (
+            (name LIKE '%%ST%%' AND bidding_percent >= 4.9)
+            OR
+            (name NOT LIKE '%%ST%%' AND (
+                ((code LIKE '30%%' OR code LIKE '688%%') AND bidding_percent >= 19.8)
+                OR
+                ((code LIKE '8%%' OR code LIKE '43%%' OR code LIKE '92%%') AND bidding_percent >= 29.8)
+                OR
+                (code NOT LIKE '30%%' AND code NOT LIKE '688%%' AND code NOT LIKE '8%%' AND code NOT LIKE '43%%' AND code NOT LIKE '92%%' AND bidding_percent >= 9.8)
+            ))
+          )
         ORDER BY asking_amount DESC
         """
         try:
