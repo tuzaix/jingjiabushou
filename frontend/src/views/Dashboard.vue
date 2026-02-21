@@ -808,17 +808,19 @@ onUnmounted(() => {
 .top-n-body {
   display: flex;
   align-items: center;
-  font-size: 14px;
+  font-size: 13px; /* Reduced from 14px */
   color: #606266;
+  white-space: nowrap; /* Prevent wrapping */
+  overflow: hidden; /* Hide overflow */
 }
 .amount-val {
   font-family: monospace;
   font-weight: bold;
-  font-size: 15px;
+  font-size: 13px; /* Reduced from 15px */
 }
 .amount-925 {
   color: #e6a23c; /* Orange/Gold */
-  font-size: 16px; /* Make 9:25 amount slightly larger */
+  font-size: 14px; /* Reduced from 16px, still slightly larger */
 }
 .amount-920 {
   color: #409eff; /* Blue */
@@ -827,7 +829,7 @@ onUnmounted(() => {
   color: #f56c6c; /* Red */
 }
 .separator {
-  margin: 0 8px;
+  margin: 0 4px; /* Reduced from 8px */
   color: #dcdfe6;
 }
 .change-val {

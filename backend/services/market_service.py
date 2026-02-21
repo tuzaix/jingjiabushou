@@ -65,14 +65,16 @@ class MarketService:
             history_map = {}
             for row in history_data:
                 code = row['code']
-                time_val = str(row['time'])
+                time_val = str(row['time']) # e.g. "9:15:00" or "09:15:00" depending on driver/type
+                
                 if code not in history_map:
                     history_map[code] = {}
                 
                 # Check time window
-                if '09:15' in time_val:
+                # Note: str(timedelta) might be "9:15:00" (no leading zero) or "09:15:00"
+                if '9:15' in time_val: # Matches "9:15" and "09:15"
                     history_map[code]['915'] = row['amount']
-                elif '09:20' in time_val:
+                elif '9:20' in time_val: # Matches "9:20" and "09:20"
                     history_map[code]['920'] = row['amount']
             
             # 3. Get consecutive days from yesterday_limit_up (from previous trading day)
@@ -359,8 +361,8 @@ class MarketService:
             
         cache_key = f"limit_up_925:{date_str}"
         cached_data = CacheManager.get(cache_key)
-        # if cached_data:
-        #     return cached_data
+        if cached_data:
+            return cached_data
 
         # We look for records at 09:25:xx with change_percent meeting limit up criteria
         # Main board: >= 9.8%, ChiNext/STAR (300/688): >= 19.8%, ST: >= 4.9%, BJ (8/4/9): >= 29.8%
