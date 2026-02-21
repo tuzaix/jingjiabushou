@@ -25,19 +25,25 @@ class MarketService:
             return cached_data
 
         try:
-            # 1. Get Top N stocks based on 9:25 amount
+            # 1. Get Top N stocks based on 9:25 amount (taking the latest tick in the minute)
             # Time window for 9:25
             query_top_n = """
-            SELECT code, name, sector, 
-                   bidding_percent as change_percent, 
-                   asking_amount as amount, 
-                   time, date
-            FROM call_auction_data 
-            WHERE date = %s AND time >= '09:25:00' AND time < '09:26:00'
-            ORDER BY asking_amount DESC LIMIT %s
+            SELECT t1.code, t1.name, t1.sector, 
+                   t1.bidding_percent as change_percent, 
+                   t1.asking_amount as amount, 
+                   t1.time, t1.date
+            FROM call_auction_data t1
+            JOIN (
+                SELECT code, MAX(time) as max_time
+                FROM call_auction_data
+                WHERE date = %s AND time >= '09:25:00' AND time < '09:26:00'
+                GROUP BY code
+            ) t2 ON t1.code = t2.code AND t1.time = t2.max_time
+            WHERE t1.date = %s
+            ORDER BY t1.asking_amount DESC LIMIT %s
             """
             
-            top_n_data = DatabaseManager.execute_query(query_top_n, (date_str, limit), dictionary=True)
+            top_n_data = DatabaseManager.execute_query(query_top_n, (date_str, date_str, limit), dictionary=True)
             
             if not top_n_data:
                 return []
@@ -46,19 +52,22 @@ class MarketService:
             if not codes:
                 return []
                 
-            # 2. Fetch data for these codes at 9:20 and 9:15
+            # 2. Fetch data for these codes at 9:20 and 9:15 (latest tick only)
             format_strings = ','.join(['%s'] * len(codes))
             query_history = f"""
-            SELECT code, time, asking_amount as amount
-            FROM call_auction_data
-            WHERE date = %s 
-              AND code IN ({format_strings})
-              AND (
-                  (time >= '09:20:00' AND time < '09:21:00') OR
-                  (time >= '09:15:00' AND time < '09:16:00')
-              )
+            SELECT t1.code, t1.time, t1.asking_amount as amount
+            FROM call_auction_data t1
+            JOIN (
+                SELECT code,
+                       MAX(CASE WHEN time >= '09:15:00' AND time < '09:16:00' THEN time END) as max_time_915,
+                       MAX(CASE WHEN time >= '09:20:00' AND time < '09:21:00' THEN time END) as max_time_920
+                FROM call_auction_data
+                WHERE date = %s AND code IN ({format_strings})
+                GROUP BY code
+            ) t2 ON t1.code = t2.code AND (t1.time = t2.max_time_915 OR t1.time = t2.max_time_920)
+            WHERE t1.date = %s
             """
-            params_history = [date_str] + codes
+            params_history = [date_str] + codes + [date_str]
             history_data = DatabaseManager.execute_query(query_history, params_history, dictionary=True)
             
             # Map history data by code and time window
