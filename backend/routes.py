@@ -75,6 +75,14 @@ def get_auction_ranking():
     logger.debug(f"Found {len(data)} records")
     return jsonify(data)
 
+@api_bp.route('/api/market/sentiment_925', methods=['GET'])
+def get_market_sentiment_925():
+    date_str = request.args.get('date')
+    
+    logger.debug(f"Querying Market Sentiment 9:25: date={date_str}")
+    data = MarketService.get_market_sentiment_925(date_str=date_str)
+    return jsonify(data)
+
 @api_bp.route('/api/market/trading_days', methods=['GET'])
 def get_trading_days():
     """

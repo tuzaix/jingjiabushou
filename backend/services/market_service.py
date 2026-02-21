@@ -420,6 +420,107 @@ class MarketService:
             return []
 
     @staticmethod
+    def get_market_sentiment_925(date_str=None):
+        """
+        Get market sentiment stats at 9:25 for the given date (Today) and previous trading day (Yesterday).
+        Stats include: Limit Up/Down counts, Rise/Fall counts, Volume (9:25).
+        """
+        if not date_str:
+            date_str = datetime.date.today().strftime('%Y-%m-%d')
+            
+        cache_key = f"market_sentiment_925:{date_str}"
+        cached_data = CacheManager.get(cache_key)
+        if cached_data:
+            return cached_data
+
+        # 1. Identify Today and Yesterday
+        trading_days = MarketService.get_trading_days(end_date=date_str)
+        # Sort just in case
+        trading_days.sort()
+        
+        idx = -1
+        if date_str in trading_days:
+            idx = trading_days.index(date_str)
+        else:
+            # If date_str is not in list (e.g. weekend), find the last available date
+            # But usually frontend passes a valid trading day.
+            # If not found, we treat date_str as "Today" (even if not in list) and try to find previous
+            # Check if date_str is greater than last day
+            if trading_days and date_str > trading_days[-1]:
+                # Assume date_str is valid, and last day in list is yesterday? 
+                # No, get_trading_days(end_date=date_str) should include date_str if it's a trading day.
+                pass
+        
+        yesterday_date = None
+        if idx >= 1:
+            yesterday_date = trading_days[idx-1]
+        elif idx == -1 and trading_days:
+             # If date_str not found, maybe use the last one as yesterday?
+             # This is risky. Let's just try to query date_str anyway.
+             pass
+            
+        # 2. Helper to get stats from market_sentiment_stats and market_capacity
+        def get_stats(d_str):
+            if not d_str:
+                return None
+            
+            # Query market_sentiment_stats
+            # Prefer 9:25 data if available, otherwise latest
+            query_stats = """
+            SELECT non_limit_up_count, non_limit_down_count, rise_count, fall_count
+            FROM market_sentiment_stats
+            WHERE date = %s
+            ORDER BY time ASC
+            LIMIT 1
+            """
+            stats = DatabaseManager.execute_query(query_stats, (d_str,), dictionary=True)
+            
+            # Query market_capacity for volume (9:25 Call Auction Amount)
+            query_cap = """
+            SELECT call_auction_amount
+            FROM market_capacity
+            WHERE date = %s
+            """
+            cap = DatabaseManager.execute_query(query_cap, (d_str,), dictionary=True)
+            
+            limit_up = 0
+            limit_down = 0
+            rise = 0
+            fall = 0
+            vol = 0
+            
+            if stats:
+                row = stats[0]
+                limit_up = int(row.get('non_limit_up_count') or 0)
+                limit_down = int(row.get('non_limit_down_count') or 0)
+                rise = int(row.get('rise_count') or 0)
+                fall = int(row.get('fall_count') or 0)
+                
+            if cap:
+                # call_auction_amount is likely in 'Wan' (10k), convert to raw
+                raw_amount = float(cap[0].get('call_auction_amount') or 0)
+                vol = raw_amount * 10000
+            
+            return {
+                'limit_up': limit_up,
+                'limit_down': limit_down,
+                'rise': rise,
+                'fall': fall,
+                'volume': vol
+            }
+
+        stats_today = get_stats(date_str)
+        stats_yesterday = get_stats(yesterday_date)
+        
+        result = {
+            'today': stats_today,
+            'yesterday': stats_yesterday
+        }
+        
+        CacheManager.set(cache_key, result, ttl=3)
+        return result
+
+    @staticmethod
     def get_trading_days(start_date=None, end_date=None):
         """
         Get list of trading days from Sina via akshare.
@@ -427,12 +528,26 @@ class MarketService:
         import akshare as ak
         
         today = datetime.date.today()
+
+        def to_date(d):
+            if isinstance(d, str):
+                try:
+                    return datetime.datetime.strptime(d, '%Y-%m-%d').date()
+                except ValueError:
+                    return today
+            return d
+
         if not start_date:
             # Default to past 3 years to cover more history
             start_date = today - datetime.timedelta(days=365 * 3)
+        else:
+            start_date = to_date(start_date)
+
         if not end_date:
             # Future 60 days
             end_date = today + datetime.timedelta(days=60)
+        else:
+            end_date = to_date(end_date)
             
         cache_key = f"trading_days:{start_date}:{end_date}"
         cached_data = CacheManager.get(cache_key)

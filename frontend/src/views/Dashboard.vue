@@ -158,8 +158,10 @@
                       <div class="stock-info">
                         <span :class="getChangeClass(item.change_percent)">{{ formatChange(item.change_percent) }}</span>
                       </div>
-                      <div class="stock-info amount">
-                        {{ formatAmount(item.bidding_amount) }} / {{ formatAmount(item.asking_amount) }}
+                      <div class="stock-info amount" title="成交额 / 涨停委买额">
+                        <span>{{ formatAmount(item.bidding_amount) }}</span>
+                        <span style="color: #909399; margin: 0 4px;">/</span>
+                        <span style="color: #E6A23C;">{{ formatAmount(item.asking_amount) }}</span>
                       </div>
                       <div style="display: flex; margin-left: 10px;">
                         <span v-for="sec in getSortedLimitUpSectors(item.sector).slice(0, 2)" :key="sec" class="stock-tag" :style="getLimitUpHeatStyle(sec)">{{ sec }}</span>
@@ -175,30 +177,82 @@
       </el-col>
       
       <el-col :span="8">
-        <el-card class="box-card" :body-style="{ padding: '0px' }">
-          <template #header>
-            <div class="card-header">
-              <span>一字板 (9:25 涨幅10%)</span>
+        <div style="height: calc(100vh - 120px); display: flex; flex-direction: column; gap: 20px;">
+          <!-- 1. Market Sentiment -->
+          <el-card class="box-card" :body-style="{ padding: '15px' }" style="flex: 0 0 auto;">
+            <template #header>
+              <div class="card-header">
+                <span>大局观 (9:25)</span>
+              </div>
+            </template>
+            <div class="sentiment-container" v-if="marketSentiment && marketSentiment.today">
+               <div class="sentiment-row">
+                 <div class="sentiment-item">
+                   <div class="label">涨停数 (今/昨)</div>
+                   <div class="value">
+                     <span class="red">{{ marketSentiment.today.limit_up }}</span> / <span class="gray">{{ marketSentiment.yesterday?.limit_up || '-' }}</span>
+                   </div>
+                 </div>
+                 <div class="sentiment-item">
+                   <div class="label">跌停数 (今/昨)</div>
+                   <div class="value">
+                     <span class="green">{{ marketSentiment.today.limit_down }}</span> / <span class="gray">{{ marketSentiment.yesterday?.limit_down || '-' }}</span>
+                   </div>
+                 </div>
+               </div>
+               <div class="sentiment-row">
+                 <div class="sentiment-item">
+                   <div class="label">上涨数 (今/昨)</div>
+                   <div class="value">
+                     <span class="red">{{ marketSentiment.today.rise }}</span> / <span class="gray">{{ marketSentiment.yesterday?.rise || '-' }}</span>
+                   </div>
+                 </div>
+                 <div class="sentiment-item">
+                   <div class="label">下跌数 (今/昨)</div>
+                   <div class="value">
+                     <span class="green">{{ marketSentiment.today.fall }}</span> / <span class="gray">{{ marketSentiment.yesterday?.fall || '-' }}</span>
+                   </div>
+                 </div>
+               </div>
+               <div class="sentiment-row">
+                 <div class="sentiment-item full-width">
+                   <div class="label">量能 (今/昨)</div>
+                   <div class="value">
+                     <span class="bold">{{ formatAmount(marketSentiment.today.volume) }}</span> / 
+                     <span class="gray">{{ formatAmount(marketSentiment.yesterday?.volume) }}</span>
+                   </div>
+                 </div>
+               </div>
             </div>
-          </template>
-          <el-table :data="limitUp925List" style="width: 100%" height="calc(100vh - 180px)" stripe :header-cell-style="{background:'#f5f7fa'}">
-            <el-table-column prop="code" label="代码" width="80" />
-            <el-table-column prop="name" label="名称" width="80" />
-            <el-table-column prop="price" label="价格" width="70" />
-            <el-table-column prop="change_percent" label="涨幅%" width="70">
+            <div v-else class="no-data">暂无数据</div>
+          </el-card>
+
+          <!-- 2. One Word Board -->
+          <el-card class="box-card" :body-style="{ padding: '0px' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <template #header>
+              <div class="card-header">
+                <span>一字板 (9:25 涨幅10%)</span>
+              </div>
+            </template>
+            <el-table :data="limitUp925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
+                <el-table-column prop="code" label="代码" width="80" />
+                <el-table-column prop="name" label="名称" width="80" />
+                <el-table-column prop="price" label="价格" width="70" />
+                <el-table-column prop="change_percent" label="涨幅%" width="70">
+                    <template #default="scope">
+                    <span :style="{ color: 'red' }">
+                        {{ scope.row.change_percent }}%
+                    </span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="amount" label="封单额" width="100">
                 <template #default="scope">
-                  <span :style="{ color: 'red' }">
-                    {{ scope.row.change_percent }}%
-                  </span>
+                    {{ formatAmount(scope.row.amount) }}
                 </template>
-            </el-table-column>
-            <el-table-column prop="amount" label="金额" width="100">
-              <template #default="scope">
-                {{ formatAmount(scope.row.amount) }}
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
+                </el-table-column>
+            </el-table>
+          </el-card>
+        </div>
       </el-col>
     </el-row>
   </div>
@@ -214,6 +268,7 @@ const ranking920List = ref([])
 const ranking915List = ref([])
 const yesterdayLimitUpList = ref([])
 const limitUp925List = ref([])
+const marketSentiment = ref(null)
 const autoRefresh = ref(true)
 const refreshInterval = ref(5000)
 
@@ -646,6 +701,7 @@ const startTimer = () => {
     timer = setInterval(() => {
       fetchTopN()
       fetchLimitUp925()
+      fetchMarketSentiment()
       // Optional: fetchYesterdayLimitUp usually doesn't change often, but can be added if needed
     }, refreshInterval.value)
   }
@@ -701,6 +757,18 @@ const handleDateChange = () => {
   fetchTopN()
   fetchYesterdayLimitUp()
   fetchLimitUp925()
+  fetchMarketSentiment()
+}
+
+const fetchMarketSentiment = async () => {
+  try {
+    const response = await axios.get('/api/market/sentiment_925', {
+      params: { date: selectedDate.value }
+    })
+    marketSentiment.value = response.data
+  } catch (error) {
+    console.error('Error fetching market sentiment:', error)
+  }
 }
 
 const fetchTopN = async () => {
