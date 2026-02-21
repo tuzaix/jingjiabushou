@@ -467,7 +467,7 @@ class MarketService:
             # Query market_sentiment_stats
             # Prefer 9:25 data if available, otherwise latest
             query_stats = """
-            SELECT non_limit_up_count, non_limit_down_count, rise_count, fall_count
+            SELECT non_st_limit_up_count, non_st_limit_down_count, rise_count, fall_count
             FROM market_sentiment_stats
             WHERE date = %s
             ORDER BY time ASC
@@ -491,8 +491,8 @@ class MarketService:
             
             if stats:
                 row = stats[0]
-                limit_up = int(row.get('non_limit_up_count') or 0)
-                limit_down = int(row.get('non_limit_down_count') or 0)
+                limit_up = int(row.get('non_st_limit_up_count') or 0)
+                limit_down = int(row.get('non_st_limit_down_count') or 0)
                 rise = int(row.get('rise_count') or 0)
                 fall = int(row.get('fall_count') or 0)
                 
