@@ -147,7 +147,7 @@
           <!-- Custom Layout for Yesterday Limit Up Performance -->
           <div class="yesterday-limit-up-container" style="height: calc(100vh - 180px); overflow-y: auto; padding: 20px;">
              <div v-for="group in groupedYesterdayLimitUp" :key="group.key" class="limit-up-group">
-                <div class="group-label">{{ group.label }}</div>
+                <div class="group-label" :style="group.rate >= 50 ? { color: '#f56c6c' } : {}">{{ group.label }}</div>
                 <div class="group-items">
                    <div v-for="item in group.items" :key="item.code" class="stock-card">
                  <div v-if="item.edition && item.edition !== 0 && (item.consecutive_days > item.edition)" class="edition-badge">
@@ -329,8 +329,9 @@ const groupedYesterdayLimitUp = computed(() => {
       
       return {
         key: `boards-${boards}`,
-        label: `${boards}进${boards + 1}板 (${limitUpCount}/${total}=${rate}%)`,
-        items: items
+        label: `${boards}进${boards + 1}板 晋级率：${limitUpCount}/${total}=${rate}%`,
+        items: items,
+        rate: rate
       }
     })
     
@@ -881,10 +882,12 @@ onUnmounted(() => {
 .group-label {
   font-weight: bold;
   font-size: 16px;
-  margin-bottom: 8px;
-  color: #333;
-  padding-left: 5px;
-  border-left: 3px solid #409eff;
+  margin-bottom: 12px;
+  color: #303133;
+  padding: 8px 12px;
+  background-color: #ecf5ff;
+  border-radius: 4px;
+  border-left: 5px solid #409eff;
 }
 
 .group-items {
@@ -912,7 +915,8 @@ onUnmounted(() => {
 }
 
 .stock-card .stock-name {
-  font-size: 18px;
+  font-size: 15px;
+  font-weight: bold; /* Ensure bold is kept/added if needed, though .stock-name has it */
 }
 
 .stock-card .stock-info {
@@ -926,17 +930,17 @@ onUnmounted(() => {
 
 .edition-badge {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: -10px;
+  right: -10px;
   background-color: #e6a23c;
   color: white;
-  font-size: 10px;
-  padding: 1px 5px;
-  border-radius: 10px;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  transform: scale(0.9);
   white-space: nowrap;
   z-index: 10;
+  font-weight: bold;
 }
 
 .stock-card:hover {
