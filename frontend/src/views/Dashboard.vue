@@ -185,42 +185,93 @@
                 <span>大局观 (9:25)</span>
               </div>
             </template>
-            <div class="sentiment-container" v-if="marketSentiment && marketSentiment.today">
-               <div class="sentiment-row">
-                 <div class="sentiment-item">
-                   <div class="label">涨停数 (今/昨)</div>
-                   <div class="value">
-                     <span class="red">{{ marketSentiment.today.limit_up }}</span> / <span class="gray">{{ marketSentiment.yesterday?.limit_up || '-' }}</span>
+            <div class="sentiment-grid" v-if="marketSentiment && marketSentiment.today">
+               <!-- Card 1: Limit Up / Down -->
+               <div class="stat-card mixed-bg">
+                 <div class="sub-stat">
+                   <div class="stat-header-mini">
+                      <span class="stat-label">涨停</span>
+                      <el-tag size="small" type="danger" effect="dark" class="mini-tag">今</el-tag>
+                   </div>
+                   <div class="stat-content-mini">
+                      <div class="value-row">
+                          <span class="stat-value red">{{ marketSentiment.today.limit_up }}</span>
+                          <span class="trend-icon" v-if="marketSentiment.yesterday">
+                              <el-icon v-if="marketSentiment.today.limit_up > marketSentiment.yesterday.limit_up" class="text-red"><CaretTop /></el-icon>
+                              <el-icon v-else-if="marketSentiment.today.limit_up < marketSentiment.yesterday.limit_up" class="text-green"><CaretBottom /></el-icon>
+                          </span>
+                      </div>
+                      <span class="stat-sub-val">昨: {{ marketSentiment.yesterday?.limit_up || '-' }}</span>
                    </div>
                  </div>
-                 <div class="sentiment-item">
-                   <div class="label">跌停数 (今/昨)</div>
-                   <div class="value">
-                     <span class="green">{{ marketSentiment.today.limit_down }}</span> / <span class="gray">{{ marketSentiment.yesterday?.limit_down || '-' }}</span>
+                 <div class="divider-vertical"></div>
+                 <div class="sub-stat">
+                   <div class="stat-header-mini">
+                      <span class="stat-label">跌停</span>
+                      <el-tag size="small" type="success" effect="dark" class="mini-tag">今</el-tag>
+                   </div>
+                   <div class="stat-content-mini">
+                      <div class="value-row">
+                          <span class="stat-value green">{{ marketSentiment.today.limit_down }}</span>
+                          <span class="trend-icon" v-if="marketSentiment.yesterday">
+                              <el-icon v-if="marketSentiment.today.limit_down > marketSentiment.yesterday.limit_down" class="text-green"><CaretTop /></el-icon>
+                              <el-icon v-else-if="marketSentiment.today.limit_down < marketSentiment.yesterday.limit_down" class="text-red"><CaretBottom /></el-icon>
+                          </span>
+                      </div>
+                      <span class="stat-sub-val">昨: {{ marketSentiment.yesterday?.limit_down || '-' }}</span>
                    </div>
                  </div>
                </div>
-               <div class="sentiment-row">
-                 <div class="sentiment-item">
-                   <div class="label">上涨数 (今/昨)</div>
-                   <div class="value">
-                     <span class="red">{{ marketSentiment.today.rise }}</span> / <span class="gray">{{ marketSentiment.yesterday?.rise || '-' }}</span>
+
+               <!-- Card 2: Rise / Fall -->
+               <div class="stat-card mixed-bg">
+                 <div class="sub-stat">
+                   <div class="stat-header-mini">
+                      <span class="stat-label">上涨</span>
+                   </div>
+                   <div class="stat-content-mini">
+                      <div class="value-row">
+                          <span class="stat-value red">{{ marketSentiment.today.rise }}</span>
+                          <span class="trend-icon" v-if="marketSentiment.yesterday">
+                              <el-icon v-if="marketSentiment.today.rise > marketSentiment.yesterday.rise" class="text-red"><CaretTop /></el-icon>
+                              <el-icon v-else-if="marketSentiment.today.rise < marketSentiment.yesterday.rise" class="text-green"><CaretBottom /></el-icon>
+                          </span>
+                      </div>
+                      <span class="stat-sub-val">昨: {{ marketSentiment.yesterday?.rise || '-' }}</span>
                    </div>
                  </div>
-                 <div class="sentiment-item">
-                   <div class="label">下跌数 (今/昨)</div>
-                   <div class="value">
-                     <span class="green">{{ marketSentiment.today.fall }}</span> / <span class="gray">{{ marketSentiment.yesterday?.fall || '-' }}</span>
+                 <div class="divider-vertical"></div>
+                 <div class="sub-stat">
+                   <div class="stat-header-mini">
+                      <span class="stat-label">下跌</span>
+                   </div>
+                   <div class="stat-content-mini">
+                      <div class="value-row">
+                          <span class="stat-value green">{{ marketSentiment.today.fall }}</span>
+                          <span class="trend-icon" v-if="marketSentiment.yesterday">
+                              <el-icon v-if="marketSentiment.today.fall > marketSentiment.yesterday.fall" class="text-green"><CaretTop /></el-icon>
+                              <el-icon v-else-if="marketSentiment.today.fall < marketSentiment.yesterday.fall" class="text-red"><CaretBottom /></el-icon>
+                          </span>
+                      </div>
+                      <span class="stat-sub-val">昨: {{ marketSentiment.yesterday?.fall || '-' }}</span>
                    </div>
                  </div>
                </div>
-               <div class="sentiment-row">
-                 <div class="sentiment-item full-width">
-                   <div class="label">量能 (今/昨)</div>
-                   <div class="value">
-                     <span class="bold">{{ formatAmount(marketSentiment.today.volume) }}</span> / 
-                     <span class="gray">{{ formatAmount(marketSentiment.yesterday?.volume) }}</span>
-                   </div>
+
+               <!-- Card 3: Volume -->
+               <div class="stat-card vol-bg single-col">
+                 <div class="stat-header-mini center">
+                    <span class="stat-label">量能 (9:25)</span>
+                 </div>
+                 <div class="stat-content-mini center">
+                    <div class="value-row">
+                        <span class="stat-value blue">{{ formatAmount(marketSentiment.today.volume) }}</span>
+                        <span class="trend-icon" v-if="marketSentiment.yesterday">
+                            <el-icon v-if="marketSentiment.today.volume > marketSentiment.yesterday.volume" class="text-red"><CaretTop /></el-icon>
+                            <el-icon v-else-if="marketSentiment.today.volume < marketSentiment.yesterday.volume" class="text-green"><CaretBottom /></el-icon>
+                        </span>
+                    </div>
+                    <span class="stat-sub-val">昨: {{ formatAmount(marketSentiment.yesterday?.volume) }}</span>
                  </div>
                </div>
             </div>
@@ -1148,9 +1199,118 @@ onUnmounted(() => {
     line-height: 24px;
     text-align: center;
     border-radius: 4px;
-  }
-  
-  .rank-number.rank-top-1 {
+}
+
+/* Market Sentiment Grid */
+.sentiment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.stat-card {
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+  min-height: 60px;
+  background: #fff;
+  border: 1px solid #ebeef5;
+}
+
+.stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.stat-card.single-col {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.sub-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.divider-vertical {
+    width: 1px;
+    height: 40px;
+    background-color: #ebeef5;
+    margin: 0 10px;
+}
+
+/* Background Colors */
+.mixed-bg {
+  background: linear-gradient(to right, #fff, #fdfdfd);
+}
+
+.vol-bg {
+  background: linear-gradient(135deg, #ecf5ff 0%, #ffffff 100%);
+  border: 1px solid #d9ecff;
+}
+
+/* Content Styles */
+.stat-header-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+  width: 100%;
+}
+
+.stat-header-mini.center {
+    justify-content: center;
+}
+
+.stat-label {
+  font-size: 16px;
+  color: #606266;
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+.mini-tag {
+    transform: scale(0.8);
+    transform-origin: left center;
+    margin-left: -2px;
+}
+
+.stat-content-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-content-mini.center {
+    align-items: center;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.stat-value.red { color: #f56c6c; }
+.stat-value.green { color: #67c23a; }
+.stat-value.blue { color: #409eff; }
+
+.stat-sub-val {
+  font-size: 13px;
+  color: #909399;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.rank-number.rank-top-1 {
     color: #fff;
     background-color: #f56c6c;
   }
@@ -1240,14 +1400,26 @@ onUnmounted(() => {
   font-family: monospace;
 }
 
+/* Trend Icon */
+.value-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
 
+.trend-icon {
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+}
 
 .text-red {
-  color: #f56c6c;
+    color: #f56c6c;
 }
 
 .text-green {
-  color: #67c23a;
+    color: #67c23a;
 }
 
 .no-data {
