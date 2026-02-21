@@ -87,14 +87,17 @@ class MarketService:
             limit_up_map = {}
             if prev_date_str:
                 query_limit_up = f"""
-                SELECT code, consecutive_days
+                SELECT code, consecutive_days, consecutive_boards
                 FROM yesterday_limit_up
                 WHERE date = %s AND code IN ({format_strings})
                 """
                 params_limit = [prev_date_str] + codes
                 limit_up_data = DatabaseManager.execute_query(query_limit_up, params_limit, dictionary=True)
                 for row in limit_up_data:
-                    limit_up_map[row['code']] = row['consecutive_days']
+                    limit_up_map[row['code']] = {
+                        'consecutive_days': row['consecutive_days'],
+                        'consecutive_boards': row['consecutive_boards']
+                    }
             
             # 4. Merge all data
             result = []
@@ -122,7 +125,8 @@ class MarketService:
                     'amount': row['amount'], # This is 9:25 amount
                     'amount_920': hist.get('920', 0),
                     'amount_915': hist.get('915', 0),
-                    'consecutive_days': limit_up_map.get(code),
+                    'consecutive_days': limit_up_map.get(code, {}).get('consecutive_days', 0),
+                    'consecutive_boards': limit_up_map.get(code, {}).get('consecutive_boards', 0),
                     'time': time_val,
                     'date': date_val,
                     'rank': row.get('rank', 0) # Though we didn't set rank in query

@@ -437,17 +437,30 @@ const getBoardTagInfo = (item) => {
    const isLimitUp = limitUp925Set.value.has(item.code)
    
    const prevDays = item.consecutive_days || 0
+   
+   const prevBoards = item.consecutive_boards || 0
   
   if (isLimitUp) {
     if (prevDays === 0) {
       return { text: '首板', class: 'board-tag' }
     } else {
-      return { text: (prevDays + 1) + '板', class: 'board-tag' }
+      if (prevDays == prevBoards) {
+        return { text: (prevBoards + 1) + '板', class: 'board-tag' }
+      } else {
+        return { text: (prevDays + 1) + '天' + (prevBoards + 1) + '板', class: 'board-tag' }
+      }
     }
   } else {
     // Not limit up now
-    if (prevDays > 0) {
-      return { text: '昨' + prevDays + '板', class: 'broken-board-tag' }
+    if (prevDays == 1 && prevBoards == 1) {
+      return { text: '昨首板', class: 'broken-board-tag' }
+    }
+    if (prevDays > 1) {
+      if (prevDays == prevBoards) {
+        return { text: '昨' + prevBoards + '板', class: 'broken-board-tag' }
+      } else {
+        return { text: '昨' + prevDays + '天' + prevBoards + '板', class: 'broken-board-tag' }
+      }
     }
   }
   
