@@ -223,6 +223,7 @@ class MarketService:
         SELECT * FROM yesterday_limit_up 
         WHERE date = %s 
           AND consecutive_days >= 2 
+          AND consecutive_boards > 1
           AND name NOT LIKE '%%ST%%'
         """
         try:
@@ -291,6 +292,7 @@ class MarketService:
         FROM yesterday_limit_up 
         WHERE date = %s 
           AND consecutive_days >= 2 
+          AND consecutive_boards > 1
           AND name NOT LIKE '%%ST%%'
         """
         

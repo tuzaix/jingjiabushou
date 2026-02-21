@@ -150,7 +150,10 @@
                 <div class="group-label">{{ group.label }}</div>
                 <div class="group-items">
                    <div v-for="item in group.items" :key="item.code" class="stock-card">
-                      <div class="stock-name">{{ item.name }}</div>
+                 <div v-if="item.edition && item.edition !== 0 && (item.consecutive_days > item.edition)" class="edition-badge">
+                    {{ item.consecutive_days }}天{{ item.edition }}板
+                 </div>
+                 <div class="stock-name">{{ item.name }}</div>
                       <div class="stock-info">
                         <span :class="getChangeClass(item.change_percent)">{{ formatChange(item.change_percent) }}</span>
                       </div>
@@ -277,11 +280,12 @@ const groupedYesterdayLimitUp = computed(() => {
   const regularGroups = {}
   
   yesterdayLimitUpList.value.forEach(item => {
-    const days = item.consecutive_days || 0
-    const boards = item.consecutive_boards || 0
+    const days = item.consecutive_days || 0  // 几天几板中的连续几天
+    const boards = item.consecutive_boards || 0 // 连扳数
+    const edition = item.edition || 0 // 几天几板，不一定连扳
     
-    // Counter-package condition: consecutive_days > 5 AND consecutive_days > consecutive_boards AND consecutive_boards <= 2
-    if (days > 5 && days > boards && boards <= 2) {
+    // Counter-package condition: consecutive_days > 4 AND consecutive_boards < 3
+    if (days > 4 && boards < 3) {
       fanbaoItems.push(item)
     } else {
       // Regular grouping
@@ -909,6 +913,22 @@ onUnmounted(() => {
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   transition: all 0.2s;
   flex-grow: 0;
+  position: relative;
+}
+
+.edition-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #e6a23c;
+  color: white;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  transform: scale(0.9);
+  white-space: nowrap;
+  z-index: 10;
 }
 
 .stock-card:hover {
