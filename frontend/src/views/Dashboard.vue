@@ -51,7 +51,7 @@
              <div style="flex: 0 0 50px; display: flex; flex-direction: column; border-right: 1px solid #eee; height: 100%;">
                 <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #909399; text-align: center; flex-shrink: 0;">序号</div>
                 <div class="rank-list sub-list" ref="rankListRef" @scroll="handleScroll('rank')" style="flex: 1; overflow-y: auto;">
-                   <div v-for="(item, index) in processedTopNList" :key="'rank-' + index" 
+                   <div v-for="(item, index) in topNList" :key="'rank-' + index" 
                         class="rank-card"
                         :class="{ 'is-hovered': hoveredCode === item.code }"
                         @mouseenter="handleMouseEnter(item.code)" 
@@ -65,7 +65,7 @@
             <div style="flex: 2; display: flex; flex-direction: column; border-right: 1px solid #eee; padding-right: 10px; padding-left: 10px; height: 100%;">
                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #e6a23c; text-align: center; flex-shrink: 0;">9:25 排名</div>
                <div class="main-list" ref="mainListRef" @scroll="handleScroll('main')" style="flex: 1; overflow-y: auto;">
-                  <div v-for="(item, index) in processedTopNList" :key="item.code" 
+                  <div v-for="(item, index) in topNList" :key="item.code" 
                        class="top-n-card" 
                        :class="{ 'is-hovered': hoveredCode === item.code }"
                        @mouseenter="handleMouseEnter(item.code)" 
@@ -96,7 +96,7 @@
                         <el-icon><component :is="getRankChangeInfo(item.code, index).icon" /></el-icon>
                      </div>
                   </div>
-                  <div v-if="processedTopNList.length === 0" class="no-data">暂无数据</div>
+                  <div v-if="topNList.length === 0" class="no-data">暂无数据</div>
                </div>
             </div>
             
@@ -470,34 +470,12 @@ const splitSector = (sectorStr) => {
   return sectorStr.split(/[\s,;；、]+/).filter(s => s && s.trim().length > 0)
 }
 
-const yesterdayLimitUpMap = computed(() => {
-  const map = {}
-  if (yesterdayLimitUpList.value) {
-    yesterdayLimitUpList.value.forEach(item => {
-      map[item.code] = item
-    })
-  }
-  return map
-})
-
-const processedTopNList = computed(() => {
-  if (!topNList.value) return []
-  return topNList.value.map(item => {
-    const yesterdayItem = yesterdayLimitUpMap.value[item.code]
-    if (yesterdayItem && yesterdayItem.sector) {
-      // Create a shallow copy to avoid mutating the original item and to trigger reactivity
-      return { ...item, sector: yesterdayItem.sector }
-    }
-    return item
-  })
-})
-
 // Compute frequency of each sector in the Top N list
 const sectorFrequency = computed(() => {
   const freq = {}
-  if (!processedTopNList.value) return freq
+  if (!topNList.value) return freq
   
-  processedTopNList.value.forEach(item => {
+  topNList.value.forEach(item => {
     if (!item.sector) return
     const sectors = splitSector(item.sector)
     sectors.forEach(sec => {

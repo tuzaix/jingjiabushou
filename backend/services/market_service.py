@@ -99,7 +99,7 @@ class MarketService:
             limit_up_map = {}
             if prev_date_str:
                 query_limit_up = f"""
-                SELECT code, consecutive_days, consecutive_boards
+                SELECT code, consecutive_days, consecutive_boards, limit_up_type
                 FROM yesterday_limit_up
                 WHERE date = %s AND code IN ({format_strings})
                 """
@@ -108,7 +108,8 @@ class MarketService:
                 for row in limit_up_data:
                     limit_up_map[row['code']] = {
                         'consecutive_days': row['consecutive_days'],
-                        'consecutive_boards': row['consecutive_boards']
+                        'consecutive_boards': row['consecutive_boards'],
+                        'limit_up_type': row['limit_up_type']
                     }
             
             # 4. Merge all data
@@ -116,6 +117,12 @@ class MarketService:
             for row in top_n_data:
                 code = row['code']
                 hist = history_map.get(code, {})
+                limit_up_info = limit_up_map.get(code, {})
+                
+                # Determine sector: prefer yesterday's limit up type if available
+                sector = row['sector']
+                if limit_up_info.get('limit_up_type'):
+                    sector = limit_up_info['limit_up_type']
                 
                 # Format time
                 time_val = row['time']
@@ -132,13 +139,13 @@ class MarketService:
                 item = {
                     'code': code,
                     'name': row['name'],
-                    'sector': row['sector'],
+                    'sector': sector,
                     'change_percent': row['change_percent'],
                     'amount': row['amount'], # This is 9:25 amount
                     'amount_920': hist.get('920', 0),
                     'amount_915': hist.get('915', 0),
-                    'consecutive_days': limit_up_map.get(code, {}).get('consecutive_days', 0),
-                    'consecutive_boards': limit_up_map.get(code, {}).get('consecutive_boards', 0),
+                    'consecutive_days': limit_up_info.get('consecutive_days', 0),
+                    'consecutive_boards': limit_up_info.get('consecutive_boards', 0),
                     'time': time_val,
                     'date': date_val,
                     'rank': row.get('rank', 0) # Though we didn't set rank in query
