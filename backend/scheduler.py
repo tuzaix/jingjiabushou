@@ -23,13 +23,12 @@ def job_fetch_call_auction():
         # This seems acceptable.
         tasks.fetch_call_auction_data(date_str=trading_day)
 
-def job_daily_update():
+def job_update_stock_list():
     logger.info("Starting daily update job")
     trading_day = get_current_or_previous_trading_day()
-    logger.info(f"Executing job_daily_update for date: {trading_day}")
+    logger.info(f"Executing job_update_stock_list for date: {trading_day}")
     
     tasks.get_all_stock_codes()
-    tasks.fetch_yesterday_limit_up(date_str=trading_day)
 
 def job_fetch_jiuyan():
     logger.info("Starting Jiuyan data fetch job")
@@ -62,10 +61,12 @@ def start_scheduler(blocking=False):
     # New Eastmoney job - runs every 10 seconds from 9:15 to 9:30
     scheduler.add_job(job_fetch_eastmoney_call_auction, 'cron', day_of_week='mon-fri', hour=9, minute='15-30', second='*/10')
 
-    scheduler.add_job(job_daily_update, 'cron', day_of_week='mon-fri', hour=9, minute=0)
+    # 定时获取东方财富的竞价请求，解析里面的--data-raw的股票列表到数据库，3天更新一次
+    scheduler.add_job(job_update_stock_list, 'cron', day_of_week='mon-fri', hour=9, minute=0)
     
-    # Schedule Jiuyan fetch daily at 17:00
-    scheduler.add_job(job_fetch_jiuyan, 'cron', day_of_week='mon-fri', hour=17, minute=0)
+    # Schedule Jiuyan fetch daily at 18:00
+    # 每天定时获取韭研按照题材概念分类的涨停数据
+    scheduler.add_job(job_fetch_jiuyan, 'cron', day_of_week='mon-fri', hour=18, minute=0)
     
     try:
         scheduler.start()

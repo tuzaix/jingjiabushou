@@ -153,6 +153,7 @@ def fetch_yesterday_limit_up(date_str=None):
 if __name__ == "__main__":
     # Test run
     # get_all_stock_codes()
-    fetch_call_auction_data()
+    # fetch_call_auction_data()
     # fetch_yesterday_limit_up()
+    fetch_jiuyan_data('2026-02-13')
     pass

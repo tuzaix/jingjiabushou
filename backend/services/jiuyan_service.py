@@ -176,6 +176,8 @@ class JiuyanService:
     @staticmethod
     def sync_data(date_str=None):
         success, result = JiuyanService.fetch_data(date_str)
+        import pprint 
+        pprint.pprint(result)
         if not success:
             return False, result
             
