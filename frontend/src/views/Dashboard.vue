@@ -149,7 +149,10 @@
              <div v-for="group in groupedYesterdayLimitUp" :key="group.key" class="limit-up-group">
                 <div class="group-label" :style="group.rate >= 50 ? { color: '#f56c6c' } : {}">{{ group.label }}</div>
                 <div class="group-items">
-                   <div v-for="item in group.items" :key="item.code" class="stock-card">
+                   <div v-for="item in group.items" :key="item.code" class="stock-card"
+                        :class="{ 'is-hovered': hoveredCode === item.code }"
+                        @mouseenter="handleMouseEnter(item.code)" 
+                        @mouseleave="handleMouseLeave">
                      <div v-if="item.code.startsWith('30') || item.code.startsWith('688')" class="limit-up-20cm-badge">20cm</div>
                      <div v-if="item.edition && item.edition !== 0 && (item.consecutive_days > item.edition)" class="edition-badge">
                         {{ item.consecutive_days }}天{{ item.edition }}板
@@ -1161,7 +1164,8 @@ onUnmounted(() => {
   font-weight: bold;
 }
 
-.stock-card:hover {
+.stock-card:hover,
+.stock-card.is-hovered {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   border-color: #e6a23c;
