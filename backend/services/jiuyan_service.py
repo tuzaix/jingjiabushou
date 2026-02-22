@@ -338,14 +338,20 @@ class JiuyanService:
         """
         try:
             config = JiuyanService.get_config()
+            from pprint import pprint
+            pprint(config)
             if not config:
                 return False, "未找到配置信息，请先配置 cURL"
 
             url = config['url']
             method = config['method']
-            headers = config['headers']
+            headers = config['headers'].copy() if config['headers'] else {}
             body = config['body']
             
+            # Remove Content-Length as requests will recalculate it
+            if 'Content-Length' in headers:
+                del headers['Content-Length']
+
             # Prepare request arguments
             kwargs = {
                 'headers': headers,
@@ -367,12 +373,16 @@ class JiuyanService:
                     # Basic validation of response structure could go here
                     return True, data
                 except json.JSONDecodeError:
+                    # If response is not JSON, return text but mark as potentially successful if that's expected?
+                    # Usually APIs return JSON. If not, maybe return text preview.
+                    # But for now, let's assume JSON is required.
+                    # Actually, some APIs might return text.
                     return False, f"响应不是有效的 JSON: {response.text[:100]}"
             else:
                 return False, f"请求失败，状态码: {response.status_code}, 内容: {response.text[:100]}"
 
         except Exception as e:
-            logger.error(f"Error fetching Eastmoney data: {e}")
+            logger.error(f"Error fetching Jiuyan data: {e}")
             return False, f"抓取异常: {str(e)}"
 
     @staticmethod
