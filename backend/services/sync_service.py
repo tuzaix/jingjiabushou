@@ -128,7 +128,10 @@ class SyncService:
             return 0
 
     @staticmethod
-    def fetch_call_auction_data(stock_list_data=None, date_str=None):
+    def sync_call_auction_data(stock_list_data=None, date_str=None):
+        '''
+        同步东方财富的竞价数据到数据库
+        '''
         if not stock_list_data:
             try:
                 stock_list_data = DatabaseManager.execute_query("SELECT code, name, market FROM stock_list", dictionary=False)
@@ -159,135 +162,16 @@ class SyncService:
             logger.warning("No secids generated.")
             return
 
-        # Get configuration from database
-        try:
-            config = EastmoneyService.get_config()
-            if not config:
-                logger.error("No Eastmoney configuration found. Please configure cURL in the backend.")
-                return
-
-            url = config.get('url')
-            if not url:
-                logger.error("Configuration URL is missing.")
-                return
-
-            headers = config.get('headers', {})
-            
-            # Prepare payload from config
-            payload = config.get('body', {})
-            
-            # Ensure payload is a dictionary to allow updates
-            if not isinstance(payload, dict):
-                logger.error(f"Configuration body must be a JSON object, got {type(payload)}. Please check the cURL configuration.")
-                return
-
-            # Update payload with dynamic values
-            # We must override secids to fetch the current list of stocks
-            payload['secids'] = secids
-            # We must override pz (page size) to fetch all stocks in one go
-            payload['pz'] = len(secids)
-            # Ensure we start from page 1
-            payload['pn'] = 1
-            
-            logger.info(f"Fetching data using configured URL: {url}")
-            logger.info(f"Payload overrides: pz={payload['pz']}, secids count={len(secids)}")
-
-            # Execute request
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
-            
-            if response.status_code == 200:
-                res_json = response.json()
-                if res_json and 'data' in res_json and res_json['data']:
-                    data_obj = res_json['data']
-                    # Some endpoints return 'diff', others might return 'full' or other keys
-                    data_list = data_obj.get('diff', data_obj.get('full', []))
-                    
-                    logger.info(f"Received {len(data_list) if data_list else 0} records from API.")
-                    if data_list:
-                        SyncService.save_call_auction_data(data_list, date_str)
-                    else:
-                        logger.warning(f"Data list is empty. Data keys: {data_obj.keys()}")
-                else:
-                    logger.warning(f"No data found in response. Keys: {res_json.keys() if res_json else 'None'}. Data: {str(res_json)[:200]}...")
-            else:
-                logger.error(f"Failed to fetch data: {response.status_code}")
-                
-        except Exception as e:
-            logger.error(f"Error fetching data with configuration: {e}")
-
-    @staticmethod
-    def save_call_auction_data(data, date_str=None):
-        try:
-            if date_str:
-                current_date = date_str
-            else:
-                current_date = datetime.date.today()
-                
-            now = datetime.datetime.now()
-            current_time = now.time()
-            current_time_str = now.strftime('%H:%M:%S')
-            
-            # Logic: 9:15 - 9:25 -> use actual time, else -> 9:25:00
-            if '09:15:00' <= current_time_str <= '09:25:00':
-                record_time = current_time_str
-            else:
-                # If we are strictly within market hours logic, we should probably stick to actual time
-                # But if we are running catch-up or testing, we might want 09:25:00
-                # Let's use 09:25:00 if outside the window, similar to fetch_eastmoney_call_auction logic
-                record_time = '09:25:00'
-            
-            insert_query = """
-            REPLACE INTO call_auction_data 
-            (date, time, code, name, sector, price, bidding_percent, bidding_amount, asking_amount, yidongleixing)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """
-            
-            def get_val(item, key, default=0):
-                val = item.get(key, default)
-                if val == '-': return default
-                return val
-
-            # Sort by auction amount (f616)
-            data.sort(key=lambda x: float(get_val(x, 'f616', 0)), reverse=True)
-            
-            db_data = []
-            
-            for idx, item in enumerate(data):
-                code = item.get('f12', '')
-                name = item.get('f14', '')
-                # 过滤掉所有的st, 退市票
-                if name.startswith('ST') or name.startswith('*') or name.endswith('退'):
-                    continue
-                sector = item.get('f100', '') # f100: Sector/Concept
-                
-                # f2: Latest Price
-                price = get_val(item, 'f2', 0)
-                if price == 0 and bidding_amount == 0:
-                    continue
-                
-                # f615: Auction Increase (bidding_percent)
-                bidding_percent = get_val(item, 'f615', 0)
-                
-                # f616: Auction Amount (bidding_amount)
-                bidding_amount = get_val(item, 'f616', 0)
-
-                # 未知字段
-                yidongleixing = get_val(item, 'f265', '')
-                
-                # f618: Unmatched Amount (asking_amount)
-                # Note: f618 is "Bid Unmatched Amount" (Limit Up Bid Amount)
-                # We map it to asking_amount as per table schema availability
-                asking_amount = get_val(item, 'f618', 0) + bidding_amount
-                
-                db_data.append((current_date, record_time, code, name, sector, price, bidding_percent, bidding_amount, asking_amount, yidongleixing))
-
-            db_data.sort(key=lambda x: x[-2], reverse=True)
-            db_data = db_data[:200]
-              
-            count = DatabaseManager.execute_update(insert_query, db_data, many=True)
-            logger.info(f"Saved {count} call auction records for date {current_date} time {record_time}.")
-        except Exception as e:
-            logger.error(f"Error saving data: {e}")
+        # Fetch using EastmoneyService
+        raw_data = EastmoneyService.fetch_call_auction_data(secids)
+        
+        if raw_data:
+            # Process/Normalize data
+            processed_data = EastmoneyService.process_call_auction_data(raw_data)
+            # Save data
+            EastmoneyService.save_call_auction_data(processed_data, date_str)
+        else:
+            logger.warning("No data fetched from EastmoneyService.")
 
     @staticmethod
     def fetch_yesterday_limit_up(date_str=None):

@@ -33,7 +33,8 @@ def job_fetch_call_auction():
         # If today is Saturday, trading_day is Friday.
         # If we run this on Saturday 9:20, we fetch Friday's data and save as Friday.
         # This seems acceptable.
-        tasks.fetch_call_auction_data(date_str=trading_day)
+        logger.info(f"Executing job_fetch_call_auction for date: {trading_day}")
+        tasks.run_update_call_auction_data(date_str=trading_day)
 
 def job_update_stock_list():
     '''
@@ -43,7 +44,7 @@ def job_update_stock_list():
     trading_day = get_current_or_previous_trading_day()
     logger.info(f"Executing job_update_stock_list for date: {trading_day}")
     
-    tasks.get_all_stock_codes()
+    tasks.run_update_stock_list()
 
 def job_fetch_jiuyan():
     '''
@@ -53,7 +54,7 @@ def job_fetch_jiuyan():
     trading_day = get_current_or_previous_trading_day()
     logger.info(f"Executing job_fetch_jiuyan for date: {trading_day}")
     
-    tasks.fetch_jiuyan_data(date_str=trading_day)
+    tasks.run_update_jiuyan_data(date_str=trading_day)
 
 def start_scheduler(blocking=False):
     if blocking:

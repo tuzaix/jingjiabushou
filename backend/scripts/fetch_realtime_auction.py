@@ -13,7 +13,7 @@ def fetch_and_print_auction_data():
     print(f"[{datetime.datetime.now()}] Starting fetch from Eastmoney...")
     
     # Fetch data
-    success, result = EastmoneyService.fetch_data()
+    success, result = EastmoneyService.fetch_call_auction_data()
     
     if not success:
         print(f"Error: {result}")

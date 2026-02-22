@@ -170,7 +170,7 @@ def eastmoney_test():
     """
     Test fetching data from Eastmoney using the configured cURL command.
     """
-    success, result = EastmoneyService.fetch_data()
+    success, result = EastmoneyService.test_config_fetch_data()
     if success:
         return jsonify({"success": True, "data": result})
     else:
