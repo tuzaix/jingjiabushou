@@ -217,6 +217,7 @@ class JiuyanService:
         If date_str is None (e.g. testing), it uses the body as configured.
         """
         config = JiuyanService.get_config()
+
         if not config:
             return False, "未找到配置"
             
@@ -276,6 +277,8 @@ class JiuyanService:
         # Call fetch_data with the determined date (so it gets injected)
         success, result = JiuyanService.fetch_data(target_date_str)
         
+        print(result)
+
         if not success:
             return False, result
             
@@ -286,31 +289,37 @@ class JiuyanService:
         try:
             # Delete existing data for the date
             DatabaseManager.execute_update(
-                "DELETE FROM jiuyan_limit_up WHERE date = %s", 
+                "DELETE FROM yesterday_limit_up WHERE date = %s", 
                 (target_date_str,)
             )
             
             # Insert new data
             count = 0
             query = """
-                INSERT INTO jiuyan_limit_up 
-                (date, code, name, reason_type, reason_info, limit_up_type, plate_name)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO yesterday_limit_up 
+                (date, code, name, limit_up_type, consecutive_days, edition, consecutive_boards, days_boards, first_limit_up_time, expound)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             
             params = []
             for item in data_list:
                 # Adjust field names based on actual API response structure
                 # This is a guess based on common structures, might need adjustment
+                print(item)
                 code = item.get('code')
                 name = item.get('name')
                 reason_type = item.get('reason_type', '') # e.g. 首板, 2连板
                 reason_info = item.get('reason_info', '') # e.g. 华为概念
                 limit_up_type = item.get('limit_up_type', '') # e.g. 自然涨停
-                plate_name = item.get('plate_name', '')
+                consecutive_days = item.get('consecutive_days', 0)
+                edition = item.get('edition', '')
+                consecutive_boards = item.get('consecutive_boards', 0)
+                days_boards = item.get('days_boards', 0)
+                first_limit_up_time = item.get('first_limit_up_time', '')
+                expound = item.get('expound', '')
                 
                 if code:
-                    params.append((target_date_str, code, name, reason_type, reason_info, limit_up_type, plate_name))
+                    params.append((target_date_str, code, name, limit_up_type, consecutive_days, edition, consecutive_boards, days_boards, first_limit_up_time, expound))
                     count += 1
             
             if params:

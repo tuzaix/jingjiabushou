@@ -1,23 +1,14 @@
 import requests
-import time
 import datetime
 import akshare as ak
 import pandas as pd
 import logging
 from utils.database import DatabaseManager
 from .eastmoney_service import EastmoneyService
+from .jiuyan_service import JiuyanService
+import re
 
 logger = logging.getLogger(__name__)
-
-HEADERS = {
-    'Accept': '*/*',
-    'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
-    'Connection': 'keep-alive',
-    'Content-type': 'application/json',
-    'Origin': 'https://vipmoney.eastmoney.com',
-    'Referer': 'https://vipmoney.eastmoney.com/',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'
-}
 
 class SyncService:
     @staticmethod
@@ -303,22 +294,86 @@ class SyncService:
         try:
             if not date_str:
                 date_str = datetime.date.today().strftime('%Y-%m-%d')
-                
-            date_param = date_str.replace('-', '')
-            df = ak.stock_zt_pool_previous_em(date=date_param)
             
-            DatabaseManager.execute_update("DELETE FROM yesterday_limit_up WHERE date = %s", (date_str,))
+            logger.info(f"Starting fetch_yesterday_limit_up for {date_str} using JiuyanService...")
+            success, msg = JiuyanService.sync_data(date_str)
             
-            insert_query = "INSERT INTO yesterday_limit_up (date, code, name, limit_up_type) VALUES (%s, %s, %s, %s)"
-            data = []
-            for _, row in df.iterrows():
-                code = row['代码']
-                name = row['名称']
-                reason = row['涨停原因类别'] if '涨停原因类别' in row else ''
-                data.append((date_str, code, name, reason))
+            data_source = "jiuyan"
+            
+            jiuyan_data = []
+            if success:
+                jiuyan_data = DatabaseManager.execute_query(
+                    "SELECT * FROM yesterday_limit_up WHERE date = %s", 
+                    (date_str,), 
+                    dictionary=True
+                )
+            
+            if not success or not jiuyan_data:
+                logger.warning(f"Jiuyan sync failed or no data ({msg}), falling back to AkShare.")
+                data_source = "akshare"
+            
+            if data_source == "jiuyan":
+                # Process Jiuyan Data
+                DatabaseManager.execute_update("DELETE FROM yesterday_limit_up WHERE date = %s", (date_str,))
                 
-            count = DatabaseManager.execute_update(insert_query, data, many=True)
-            logger.info(f"Saved {count} yesterday limit up stocks for date {date_str}.")
+                # Insert with extended fields
+                insert_query = """
+                    INSERT INTO yesterday_limit_up 
+                    (date, code, name, limit_up_type, consecutive_days, consecutive_boards, first_limit_up_time) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """
+                
+                data_to_insert = []
+                for row in jiuyan_data:
+                    code = row['code']
+                    name = row['name']
+                    reason_info = row['reason_info'] # e.g. "华为概念"
+                    plate_name = row['plate_name']
+                    
+                    # Parse consecutive days
+                    consecutive = 1
+                    if reason_type == '首板':
+                        consecutive = 1
+                    elif reason_type and '连板' in reason_type:
+                        try:
+                            match = re.search(r'(\d+)', reason_type)
+                            if match:
+                                consecutive = int(match.group(1))
+                        except:
+                            pass
+                    
+                    # Construct limit_up_type (reason)
+                    limit_up_type_val = reason_info if reason_info else ''
+                    if plate_name and plate_name not in limit_up_type_val:
+                         limit_up_type_val = f"{plate_name} {limit_up_type_val}".strip()
+                    
+                    # Jiuyan doesn't provide time, set to None
+                    first_limit_up_time = None
+                    
+                    data_to_insert.append((
+                        date_str, code, name, limit_up_type_val, consecutive, consecutive, first_limit_up_time
+                    ))
+                
+                count = DatabaseManager.execute_update(insert_query, data_to_insert, many=True)
+                logger.info(f"Saved {count} yesterday limit up stocks from Jiuyan for date {date_str}.")
+                
+            else:
+                # AkShare Fallback
+                date_param = date_str.replace('-', '')
+                df = ak.stock_zt_pool_previous_em(date=date_param)
+                
+                DatabaseManager.execute_update("DELETE FROM yesterday_limit_up WHERE date = %s", (date_str,))
+                
+                insert_query = "INSERT INTO yesterday_limit_up (date, code, name, limit_up_type) VALUES (%s, %s, %s, %s)"
+                data = []
+                for _, row in df.iterrows():
+                    code = row['代码']
+                    name = row['名称']
+                    reason = row['涨停原因类别'] if '涨停原因类别' in row else ''
+                    data.append((date_str, code, name, reason))
+                
+                count = DatabaseManager.execute_update(insert_query, data, many=True)
+                logger.info(f"Saved {count} yesterday limit up stocks (AkShare) for date {date_str}.")
             
         except Exception as e:
             logger.error(f"Error fetching yesterday limit up: {e}")

@@ -3,7 +3,12 @@ import datetime
 from services.sync_service import SyncService
 from services.jiuyan_service import JiuyanService
 from services.eastmoney_service import EastmoneyService
-from utils.database import DatabaseManager
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+
 
 def fetch_eastmoney_call_auction(dry_run=True, date_str=None):
     """
@@ -113,9 +118,6 @@ def fetch_jiuyan_data(date_str=None):
         return False
 
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 def get_all_stock_codes():
     """Fetch all A-share stock codes using SyncService."""
@@ -155,5 +157,5 @@ if __name__ == "__main__":
     # get_all_stock_codes()
     # fetch_call_auction_data()
     # fetch_yesterday_limit_up()
-    fetch_jiuyan_data('2026-02-13')
+    JiuyanService.sync_data('2026-02-13')
     pass
