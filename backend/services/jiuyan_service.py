@@ -68,6 +68,21 @@ class JiuyanService:
                     i += 1
                 continue
                 
+            if token in ('-b', '--cookie'):
+                if i + 1 < len(tokens):
+                    cookie_str = tokens[i+1]
+                    # If Cookie header already exists, append to it (though usually -b is preferred or they are separate)
+                    # But requests usually takes a dict for cookies or we can put it in headers['Cookie']
+                    # Let's put it in headers['Cookie'] for simplicity as that's what curl does effectively
+                    if 'Cookie' in headers:
+                         headers['Cookie'] += f"; {cookie_str}"
+                    else:
+                         headers['Cookie'] = cookie_str
+                    i += 2
+                else:
+                    i += 1
+                continue
+                
             if token in ('-d', '--data', '--data-raw', '--data-binary', '--data-ascii'):
                 if i + 1 < len(tokens):
                     data_str = tokens[i+1]
@@ -346,7 +361,12 @@ class JiuyanService:
             url = config['url']
             method = config['method']
             headers = config['headers'].copy() if config['headers'] else {}
-            body = config['body']
+            
+            # Clean header values: remove newlines/carriage returns that might have been preserved by shlex
+            # and ensure they are single lines as required by HTTP/1.1
+            for key, value in headers.items():
+                if isinstance(value, str):
+                    headers[key] = value.replace('\n', ' ').replace('\r', ' ').strip()
             
             # Remove Content-Length as requests will recalculate it
             if 'Content-Length' in headers:
@@ -358,6 +378,7 @@ class JiuyanService:
                 'timeout': 10
             }
             
+            body = config['body']
             if body:
                 if isinstance(body, dict) or isinstance(body, list):
                     kwargs['json'] = body

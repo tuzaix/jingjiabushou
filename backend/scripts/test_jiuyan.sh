@@ -1,0 +1,19 @@
+curl 'https://app.jiuyangongshe.com/jystock-app/api/v1/action/field' \
+  -H 'Accept: application/json, text/plain, */*' \
+  -H 'Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7' \
+  -H 'Connection: keep-alive' \
+  -H 'Content-Type: application/json' \
+  -b 'SESSION=NzE2YWU3NWQtMTE4Ni00NzA4LTkxMTQtZTFlZWQ1N2NmODI5; Hm_lvt_58aa18061df7855800f2a1b32d6da7f4=1771683666,1771706442,1771748779,1771765879; Hm_lpvt_58aa18061df7855800f2a1b32d6da7f4=1771766225' \
+  -H 'Origin: https://www.jiuyangongshe.com' \
+  -H 'Referer: https://www.jiuyangongshe.com/' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: same-site' \
+  -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36' \
+  -H 'platform: 3' \
+  -H 'sec-ch-ua: "Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"' \
+  -H 'timestamp: 1771766227652' \
+  -H 'token: 9302122f9a9a974d1e9fe0f2819b54fd' \
+  --data-raw '{"date":"2026-02-13","pc":1}'

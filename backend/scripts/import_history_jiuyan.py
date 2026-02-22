@@ -26,20 +26,20 @@ def import_history_data(start_date=None, end_date=None, target_date=None):
   -H 'Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7' \
   -H 'Connection: keep-alive' \
   -H 'Content-Type: application/json' \
-  -b 'SESSION=NzE2YWU3NWQtMTE4Ni00NzA4LTkxMTQtZTFlZWQ1N2NmODI5; Hm_lvt_58aa18061df7855800f2a1b32d6da7f4=1771507606,1771571086; Hm_lpvt_58aa18061df7855800f2a1b32d6da7f4=1771571139' \
+  -b 'SESSION=NzE2YWU3NWQtMTE4Ni00NzA4LTkxMTQtZTFlZWQ1N2NmODI5; Hm_lvt_58aa18061df7855800f2a1b32d6da7f4=1771658214,1771683666,1771706442,1771748779; Hm_lpvt_58aa18061df7855800f2a1b32d6da7f4=1771757197' \
   -H 'Origin: https://www.jiuyangongshe.com' \
   -H 'Referer: https://www.jiuyangongshe.com/' \
   -H 'Sec-Fetch-Dest: empty' \
   -H 'Sec-Fetch-Mode: cors' \
   -H 'Sec-Fetch-Site: same-site' \
-  -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36' \
+  -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36' \
   -H 'platform: 3' \
-  -H 'sec-ch-ua: "Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"' \
+  -H 'sec-ch-ua: "Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"' \
   -H 'sec-ch-ua-mobile: ?0' \
   -H 'sec-ch-ua-platform: "Windows"' \
-  -H 'timestamp: 1771571177386' \
-  -H 'token: c6c97fb4d2a915a10ee8f2b5cdde1c86' \
-  --data-raw '{"date":"2026-02-13","pc":1}'"""
+  -H 'timestamp: 1771757209596' \
+  -H 'token: 405684e2aa44ee6fe1fb3cae21e7f777' \
+  --data-raw '{"date":"2026-02-12","pc":1}'"""
 
     logger.info("Updating Jiuyan API Config...")
     success, msg = JiuyanService.update_config(curl_command)
