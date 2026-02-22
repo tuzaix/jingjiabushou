@@ -1,44 +1,6 @@
 <template>
   <div class="dashboard-container">
-    <div class="actions-bar" style="justify-content: flex-end;">
-      <div class="right-actions">
-        <el-date-picker
-          v-model="selectedDate"
-          type="date"
-          placeholder="选择日期"
-          format="YYYY-MM-DD"
-          value-format="YYYY-MM-DD"
-          :disabled-date="disabledDate"
-          @change="handleDateChange"
-          style="width: 140px; margin-right: 15px;"
-        />
-        
-        <div style="display: flex; align-items: center; margin-right: 10px;">
-            <el-icon style="font-size: 18px; margin-right: 5px; color: #409EFF;"><Refresh /></el-icon>
-            <el-switch
-              v-model="autoRefresh"
-              @change="handleAutoRefreshChange"
-            />
-        </div>
-
-        <el-select
-          v-model="refreshInterval"
-          placeholder="间隔"
-          style="width: 80px;"
-          @change="handleIntervalChange"
-          :disabled="!autoRefresh"
-          size="default"
-        >
-          <el-option label="3s" :value="3000" />
-          <el-option label="5s" :value="5000" />
-          <el-option label="10s" :value="10000" />
-          <el-option label="30s" :value="30000" />
-          <el-option label="60s" :value="60000" />
-        </el-select>
-      </div>
-    </div>
-    
-    <el-row :gutter="20">
+    <el-row :gutter="8">
       <el-col :span="8">
           <el-card class="box-card">
           <template #header>
@@ -323,8 +285,6 @@ const ranking915List = ref([])
 const yesterdayLimitUpList = ref([])
 const limitUp925List = ref([])
 const marketSentiment = ref(null)
-const autoRefresh = ref(true)
-const refreshInterval = ref(5000)
 
 // Refs for scroll synchronization
 const rankListRef = ref(null)
@@ -738,15 +698,41 @@ const formatAmount = (val) => {
   return (num / 10000).toFixed(0) + '万'
 }
 
-const getTodayStr = () => {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-const selectedDate = ref(getTodayStr())
-const tradingDays = ref(new Set())
+import { store } from '../store/dashboard.js'
+
+const selectedDate = computed({
+  get: () => store.selectedDate,
+  set: (val) => store.setSelectedDate(val)
+})
+
+const tradingDays = computed({
+  get: () => store.tradingDays,
+  set: (val) => store.setTradingDays(val)
+})
+
+const autoRefresh = computed({
+  get: () => store.autoRefresh,
+  set: (val) => store.setAutoRefresh(val)
+})
+
+const refreshInterval = computed({
+  get: () => store.refreshInterval,
+  set: (val) => store.setRefreshInterval(val)
+})
+
+// Watch store changes
+watch(() => store.selectedDate, () => {
+  refreshAll()
+})
+
+watch(() => store.autoRefresh, (val) => {
+  handleAutoRefreshChange(val)
+})
+
+watch(() => store.refreshInterval, () => {
+  handleIntervalChange()
+})
+
 let timer = null
 
 const startTimer = () => {
@@ -784,29 +770,6 @@ const fetchTradingDays = async () => {
   }
 }
 
-const disabledDate = (time) => {
-  // Always disable future dates
-  // Use pure date comparison to avoid timezone/time issues
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  if (time.getTime() > today.getTime()) {
-      return true
-  }
-
-  // If tradingDays are loaded, restrict to those days
-  if (tradingDays.value.size > 0) {
-    const year = time.getFullYear()
-    const month = String(time.getMonth() + 1).padStart(2, '0')
-    const day = String(time.getDate()).padStart(2, '0')
-    const dateStr = `${year}-${month}-${day}`
-    return !tradingDays.value.has(dateStr)
-  }
-  
-  // Fallback: disable weekends
-  const day = time.getDay()
-  return day === 0 || day === 6
-}
-
 const fetchMarketSentiment = async () => {
   try {
     const response = await axios.get('/api/market/sentiment_925', {
@@ -828,8 +791,12 @@ const refreshAll = () => {
   fetchMarketSentiment()
 }
 
-const handleDateChange = () => {
-  refreshAll()
+const getTodayStr = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 const fetchTopN = async () => {
@@ -939,7 +906,7 @@ onUnmounted(() => {
 
 <style scoped>
 .dashboard-container {
-  padding: 20px;
+  padding: 5px;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */

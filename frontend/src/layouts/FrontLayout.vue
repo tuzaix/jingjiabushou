@@ -4,10 +4,36 @@
       <el-header class="front-header">
         <div class="header-content">
           <h1>A股竞价捕手</h1>
-          <div class="nav-links">
-            <router-link to="/admin/dashboard" class="admin-link">
-              <el-icon><Setting /></el-icon> 进入后台
-            </router-link>
+          
+          <div class="header-controls">
+            <el-date-picker
+              v-model="store.selectedDate"
+              type="date"
+              placeholder="选择日期"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              :disabled-date="disabledDate"
+              style="width: 140px;"
+            />
+            
+            <div class="refresh-control">
+                <el-icon class="refresh-icon"><Refresh /></el-icon>
+                <el-switch v-model="store.autoRefresh" />
+            </div>
+
+            <el-select
+              v-model="store.refreshInterval"
+              placeholder="间隔"
+              style="width: 60px;"
+              :disabled="!store.autoRefresh"
+              size="default"
+            >
+              <el-option label="3s" :value="3000" />
+              <el-option label="5s" :value="5000" />
+              <el-option label="10s" :value="10000" />
+              <el-option label="30s" :value="30000" />
+              <el-option label="60s" :value="60000" />
+            </el-select>
           </div>
         </div>
       </el-header>
@@ -19,7 +45,8 @@
 </template>
 
 <script setup>
-import { Setting } from '@element-plus/icons-vue'
+import { Refresh } from '@element-plus/icons-vue'
+import { store, disabledDate } from '../store/dashboard.js'
 </script>
 
 <style scoped>
@@ -31,6 +58,7 @@ import { Setting } from '@element-plus/icons-vue'
   background-color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   z-index: 10;
+  height: 60px;
 }
 .header-content {
   max-width: 1400px;
@@ -44,16 +72,22 @@ import { Setting } from '@element-plus/icons-vue'
   margin: 0;
   font-size: 20px;
   color: #303133;
+  margin-right: 40px;
 }
-.admin-link {
-  text-decoration: none;
-  color: #606266;
+.header-controls {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 14px;
+  gap: 15px;
+  margin-left: auto;
+  margin-right: 20px;
 }
-.admin-link:hover {
+.refresh-control {
+  display: flex; 
+  align-items: center;
+}
+.refresh-icon {
+  font-size: 18px; 
+  margin-right: 5px; 
   color: #409EFF;
 }
 </style>
