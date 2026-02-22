@@ -353,8 +353,6 @@ class JiuyanService:
         """
         try:
             config = JiuyanService.get_config()
-            from pprint import pprint
-            pprint(config)
             if not config:
                 return False, "未找到配置信息，请先配置 cURL"
 
