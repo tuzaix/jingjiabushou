@@ -141,15 +141,21 @@ class SyncService:
                     code_col = col
                 elif '连续涨停天数' in col_str:
                     consecutive_days_col = col
+                elif '首次涨停时间' in col_str:
+                    first_limit_up_time_col = col
+                elif "最终涨停时间" in col_str:
+                    last_limit_up_time_col = col
             
-            if not code_col or not consecutive_days_col:
+            if not code_col or not consecutive_days_col or not first_limit_up_time_col or not last_limit_up_time_col:
                 logger.error(f"Missing required columns. Found: {df.columns.tolist()}")
                 return 0
             
             # Prepare update query
             update_query = """
                 UPDATE yesterday_limit_up 
-                SET consecutive_boards = %s
+                SET consecutive_boards = %s,
+                first_limit_up_time = %s,
+                last_limit_up_time = %s
                 WHERE date = %s AND code = %s
             """
             
@@ -172,10 +178,19 @@ class SyncService:
                         consecutive_boards = int(val)
                     except:
                         pass
+                first_limit_up_time = ""
+                val = row[first_limit_up_time_col]
+                if pd.notna(val):
+                    first_limit_up_time = val
+                
+                last_limit_up_time = ""
+                val = row[last_limit_up_time_col]
+                if pd.notna(val):
+                    last_limit_up_time = val
                 
                 # Only update if we have valid data
                 if code:
-                    update_data.append((consecutive_boards, date_str, code))
+                    update_data.append((consecutive_boards, first_limit_up_time, last_limit_up_time, date_str, code))   
             
             if update_data:
                 count = DatabaseManager.execute_update(update_query, update_data, many=True)

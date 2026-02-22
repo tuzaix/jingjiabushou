@@ -338,6 +338,8 @@ class JiuyanService:
                 if not days_boards:
                     days_boards = "首板"
                 first_limit_up_time = action_info.get("time", "")
+                if not first_limit_up_time:
+                    continue
                 last_limit_up_time = first_limit_up_time
                 expound = action_info.get("expound", "")
             
