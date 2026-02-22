@@ -106,13 +106,15 @@ const handleThemeCommand = (command) => {
     --primary-green: #52c41a;
     --primary-blue: #1890ff;
     --primary-gold: #faad14;
+    
+    /* Fixed Header Styles */
+    --header-bg: #1e1e1e;
+    --header-text: #fff;
 }
 
 /* Light Theme (Default) */
 .front-layout.light {
     --bg-color: #f0f2f5;
-    --header-bg: #1e1e1e;
-    --header-text: #fff;
     --card-bg: #ffffff;
     --text-primary: #303133;
     --text-secondary: #606266;
@@ -127,8 +129,6 @@ const handleThemeCommand = (command) => {
 /* Dark Theme */
 .front-layout.dark {
     --bg-color: #121212;
-    --header-bg: #1f1f1f;
-    --header-text: #e0e0e0;
     --card-bg: #1e1e1e;
     --text-primary: #e0e0e0;
     --text-secondary: #a0a0a0;
@@ -140,20 +140,18 @@ const handleThemeCommand = (command) => {
     --control-label: #808080;
 }
 
-/* Eye-care Theme */
+/* Eye-care Theme (Warm/Yellowish) */
 .front-layout.eye-care {
-    --bg-color: #C7EDCC; /* Classic eye-care green */
-    --header-bg: #3E5F4E; /* Darker green for header */
-    --header-text: #fff;
-    --card-bg: #E3F9E5; /* Lighter green for cards */
+    --bg-color: #FAF9DE; /* Light yellowish eye-care color */
+    --card-bg: #FFFBF0; /* Very light warm white */
     --text-primary: #2c3e50;
-    --text-secondary: #5d6d7e;
-    --text-placeholder: #808b96;
-    --border-color: #a8d5ba;
-    --hover-bg: #d4efdf;
-    --hover-border: #27ae60;
-    --divider-color: #a8d5ba;
-    --control-label: #e0f2f1;
+    --text-secondary: #5d4037;
+    --text-placeholder: #8d6e63;
+    --border-color: #E6DAB2;
+    --hover-bg: #FFF3E0;
+    --hover-border: #FFB74D;
+    --divider-color: #D7CCC8;
+    --control-label: #D7CCC8;
 }
 </style>
 
