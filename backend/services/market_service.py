@@ -1,6 +1,7 @@
 import datetime
 from utils.database import DatabaseManager
 from utils.cache import CacheManager
+from utils.locks import akshare_lock
 import logging
 
 logger = logging.getLogger(__name__)
@@ -525,8 +526,6 @@ class MarketService:
         """
         Get list of trading days from Sina via akshare.
         """
-        import akshare as ak
-        
         today = datetime.date.today()
 
         def to_date(d):
@@ -555,7 +554,10 @@ class MarketService:
             return cached_data
             
         try:
-            df = ak.tool_trade_date_hist_sina()
+            with akshare_lock:
+                import akshare as ak
+                df = ak.tool_trade_date_hist_sina()
+            
             # Convert 'trade_date' to datetime.date if not already
             # Usually it returns a column of dates
             

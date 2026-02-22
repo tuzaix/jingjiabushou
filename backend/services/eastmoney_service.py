@@ -4,6 +4,7 @@ import logging
 import shlex
 import datetime
 from utils.database import DatabaseManager
+from utils.locks import akshare_lock
 
 from .base_curl_service import BaseCurlService
 
@@ -71,7 +72,9 @@ class EastmoneyService(BaseCurlService):
             logger.info(f"Updating stock_list with {len(target_codes)} codes from secids...")
             
             # Fetch all stock info to get names
-            stock_zh_a_spot_em_df = ak.stock_zh_a_spot_em()
+            with akshare_lock:
+                import akshare as ak
+                stock_zh_a_spot_em_df = ak.stock_zh_a_spot_em()
             
             # Filter by target codes first
             df_subset = stock_zh_a_spot_em_df[stock_zh_a_spot_em_df['代码'].isin(target_codes)]

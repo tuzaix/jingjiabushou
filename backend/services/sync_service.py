@@ -1,6 +1,7 @@
 import requests
 import datetime
-import akshare as ak
+from utils.locks import akshare_lock
+# import akshare as ak  <-- Moved inside method to avoid crash
 import pandas as pd
 import logging
 from utils.database import DatabaseManager
@@ -14,7 +15,9 @@ class SyncService:
     @staticmethod
     def update_all_stock_codes():
         try:
-            stock_zh_a_spot_em_df = ak.stock_zh_a_spot_em()
+            with akshare_lock:
+                import akshare as ak
+                stock_zh_a_spot_em_df = ak.stock_zh_a_spot_em()
             
             # Filter out ST, Delisted, and New Third Board/Beijing stocks
             # 1. Remove ST and Delisted based on name
