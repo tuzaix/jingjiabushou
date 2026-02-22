@@ -204,6 +204,34 @@ def kaipanla_test():
     else:
         return jsonify({"success": False, "error": result}), 500
 
+@api_bp.route('/api/admin/kaipanla/volume/config', methods=['GET', 'POST'])
+def kaipanla_volume_config():
+    if request.method == 'GET':
+        config = KaipanlaService.get_volume_config()
+        return jsonify(config or {})
+    else:
+        data = request.get_json()
+        curl_command = data.get('curl')
+        if not curl_command:
+            return jsonify({"error": "Missing curl command"}), 400
+            
+        success, message = KaipanlaService.update_volume_config(curl_command)
+        if success:
+            return jsonify({"message": message})
+        else:
+            return jsonify({"error": message}), 500
+
+@api_bp.route('/api/admin/kaipanla/volume/test', methods=['POST'])
+def kaipanla_volume_test():
+    """
+    Test fetching volume data from Kaipanla using the configured cURL command.
+    """
+    success, result = KaipanlaService.fetch_volume_data()
+    if success:
+        return jsonify({"success": True, "data": result})
+    else:
+        return jsonify({"success": False, "error": result}), 500
+
 # Manual trigger for testing
 @api_bp.route('/api/test/fetch_call_auction', methods=['POST'])
 def trigger_fetch():

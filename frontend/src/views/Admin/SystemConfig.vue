@@ -149,6 +149,54 @@
             />
           </div>
         </el-card>
+
+        <el-card class="box-card" style="margin-top: 20px;">
+          <template #header>
+            <div class="card-header">
+              <span>获取【开盘啦实时量能】数据，定期更新cURL，测试后保存生效。</span>
+            </div>
+          </template>
+          
+          <div class="config-section">
+            <el-alert
+              title="说明：请从浏览器开发者工具中复制【实时量能】相关请求的 cURL (bash) 命令，粘贴到下方文本框中。系统将自动提取 URL、Headers 和 Body 信息。"
+              type="info"
+              show-icon
+              :closable="false"
+              style="margin-bottom: 20px;"
+            />
+            
+            <el-form label-position="top">
+              <el-form-item label="cURL 命令">
+                <el-input
+                  v-model="kaipanlaVolumeCurlCommand"
+                  type="textarea"
+                  :rows="10"
+                  placeholder="请粘贴 curl 'https://...' ..."
+                />
+              </el-form-item>
+              
+              <el-form-item>
+                <el-button type="primary" @click="saveKaipanlaVolumeConfig" :loading="kaipanlaVolumeSaving">保存配置</el-button>
+                <el-button type="success" @click="testKaipanlaVolumeFetch" :loading="kaipanlaVolumeTesting">测试抓取</el-button>
+              </el-form-item>
+            </el-form>
+          </div>
+
+          <div v-if="kaipanlaVolumeTestResult" class="result-section">
+            <div class="result-header">
+              <span>测试结果</span>
+              <el-tag :type="kaipanlaVolumeTestSuccess ? 'success' : 'danger'">{{ kaipanlaVolumeTestSuccess ? '成功' : '失败' }}</el-tag>
+            </div>
+            <el-input
+              v-model="kaipanlaVolumeTestResultStr"
+              type="textarea"
+              :rows="15"
+              readonly
+              class="result-textarea"
+            />
+          </div>
+        </el-card>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -201,6 +249,20 @@ const kaipanlaTestResultStr = computed(() => {
   return typeof kaipanlaTestResult.value === 'string' 
     ? kaipanlaTestResult.value 
     : JSON.stringify(kaipanlaTestResult.value, null, 2)
+})
+
+// Kaipanla Volume Variables
+const kaipanlaVolumeCurlCommand = ref('')
+const kaipanlaVolumeSaving = ref(false)
+const kaipanlaVolumeTesting = ref(false)
+const kaipanlaVolumeTestResult = ref(null)
+const kaipanlaVolumeTestSuccess = ref(false)
+
+const kaipanlaVolumeTestResultStr = computed(() => {
+  if (!kaipanlaVolumeTestResult.value) return ''
+  return typeof kaipanlaVolumeTestResult.value === 'string' 
+    ? kaipanlaVolumeTestResult.value 
+    : JSON.stringify(kaipanlaVolumeTestResult.value, null, 2)
 })
 
 // Jiuyan Methods
@@ -332,6 +394,49 @@ const testKaipanlaFetch = async () => {
   }
 }
 
+// Kaipanla Volume Methods
+const saveKaipanlaVolumeConfig = async () => {
+  if (!kaipanlaVolumeCurlCommand.value) {
+    ElMessage.warning('请输入 cURL 命令')
+    return
+  }
+  
+  kaipanlaVolumeSaving.value = true
+  try {
+    const response = await axios.post('/api/admin/kaipanla/volume/config', {
+      curl: kaipanlaVolumeCurlCommand.value
+    })
+    ElMessage.success(response.data.message || '配置保存成功')
+  } catch (error) {
+    ElMessage.error(error.response?.data?.error || '保存失败')
+  } finally {
+    kaipanlaVolumeSaving.value = false
+  }
+}
+
+const testKaipanlaVolumeFetch = async () => {
+  kaipanlaVolumeTesting.value = true
+  kaipanlaVolumeTestResult.value = null
+  kaipanlaVolumeTestSuccess.value = false
+  
+  try {
+    const response = await axios.post('/api/admin/kaipanla/volume/test')
+    kaipanlaVolumeTestResult.value = response.data
+    kaipanlaVolumeTestSuccess.value = response.data.success
+    if (response.data.success) {
+      ElMessage.success('测试成功')
+    } else {
+      ElMessage.warning('测试完成但返回失败状态')
+    }
+  } catch (error) {
+    console.error('Test failed:', error)
+    kaipanlaVolumeTestResult.value = error.response?.data || error.message
+    ElMessage.error('测试请求失败')
+  } finally {
+    kaipanlaVolumeTesting.value = false
+  }
+}
+
 // Fetch configs on mount
 const fetchConfigs = async () => {
   try {
@@ -359,6 +464,15 @@ const fetchConfigs = async () => {
     }
   } catch (error) {
     console.error('Error fetching Kaipanla config:', error)
+  }
+
+  try {
+    const kaipanlaVolumeRes = await axios.get('/api/admin/kaipanla/volume/config')
+    if (kaipanlaVolumeRes.data && kaipanlaVolumeRes.data.curl) {
+      kaipanlaVolumeCurlCommand.value = kaipanlaVolumeRes.data.curl
+    }
+  } catch (error) {
+    console.error('Error fetching Kaipanla Volume config:', error)
   }
 }
 

@@ -96,29 +96,20 @@ class KaipanlaService:
             raise ValueError(f"Failed to parse curl command: {str(e)}")
 
     @staticmethod
-    def update_config(curl_command):
+    def _update_config_generic(curl_command, config_name):
         """
-        Parses the curl command and saves the configuration to the database.
+        Generic method to update config by name.
         """
         try:
             # Parse the command
             config = KaipanlaService.parse_curl_command(curl_command)
             
             # Database update logic
-            # Assuming we use a similar structure to JiuyanService, storing in 'api_configs' table
-            # We need to import DatabaseManager here to avoid circular imports if possible, 
-            # or ensure it's available.
             from utils.database import DatabaseManager
-            
-            # Use a specific name for Kaipanla config
-            config_name = 'kaipanla_call_auction' 
             
             # Serialize headers and body
             headers_json = json.dumps(config['headers'])
             body_json = json.dumps(config['body']) if isinstance(config['body'], (dict, list)) else config['body']
-            
-            # Check if config exists to decide INSERT or UPDATE (or use ON DUPLICATE KEY UPDATE)
-            # Assuming api_configs table has a unique key on 'name'
             
             query = """
                 INSERT INTO api_configs (name, url, method, headers, body) 
@@ -143,8 +134,22 @@ class KaipanlaService:
             return True, "配置更新成功"
 
         except Exception as e:
-            logger.error(f"Error updating Kaipanla config: {e}")
+            logger.error(f"Error updating Kaipanla config ({config_name}): {e}")
             return False, f"配置更新失败: {str(e)}"
+
+    @staticmethod
+    def update_config(curl_command):
+        """
+        Parses the curl command and saves the call auction configuration to the database.
+        """
+        return KaipanlaService._update_config_generic(curl_command, 'kaipanla_call_auction')
+
+    @staticmethod
+    def update_volume_config(curl_command):
+        """
+        Parses the curl command and saves the volume configuration to the database.
+        """
+        return KaipanlaService._update_config_generic(curl_command, 'kaipanla_volume')
 
     @staticmethod
     def generate_curl_command(config):
@@ -178,15 +183,15 @@ class KaipanlaService:
         return " \\\n  ".join(parts)
 
     @staticmethod
-    def get_config():
+    def _get_config_generic(config_name):
         """
-        Retrieves the current configuration from the database.
+        Generic method to retrieve config by name.
         """
         try:
             from utils.database import DatabaseManager
             
-            query = "SELECT url, method, headers, body FROM api_configs WHERE name = 'kaipanla_call_auction'"
-            result = DatabaseManager.execute_query(query, dictionary=True)
+            query = "SELECT url, method, headers, body FROM api_configs WHERE name = %s"
+            result = DatabaseManager.execute_query(query, (config_name,), dictionary=True)
             
             if result:
                 row = result[0]
@@ -201,7 +206,7 @@ class KaipanlaService:
                         except:
                             pass # Keep as string if not valid JSON
                 except Exception as e:
-                    logger.warning(f"Error parsing stored JSON config: {e}")
+                    logger.warning(f"Error parsing stored JSON config ({config_name}): {e}")
 
                 # Reconstruct curl command
                 row['curl'] = KaipanlaService.generate_curl_command(row)
@@ -210,16 +215,30 @@ class KaipanlaService:
             return None
 
         except Exception as e:
-            logger.error(f"Error getting Kaipanla config: {e}")
+            logger.error(f"Error getting Kaipanla config ({config_name}): {e}")
             return None
 
     @staticmethod
-    def fetch_data():
+    def get_config():
         """
-        Fetches data using the stored configuration.
+        Retrieves the call auction configuration from the database.
+        """
+        return KaipanlaService._get_config_generic('kaipanla_call_auction')
+
+    @staticmethod
+    def get_volume_config():
+        """
+        Retrieves the volume configuration from the database.
+        """
+        return KaipanlaService._get_config_generic('kaipanla_volume')
+
+    @staticmethod
+    def _fetch_data_generic(config_name):
+        """
+        Generic method to fetch data using stored config.
         """
         try:
-            config = KaipanlaService.get_config()
+            config = KaipanlaService._get_config_generic(config_name)
             if not config:
                 return False, "未找到配置信息，请先配置 cURL"
 
@@ -246,7 +265,6 @@ class KaipanlaService:
             if response.status_code == 200:
                 try:
                     data = response.json()
-                    # Basic validation of response structure could go here
                     return True, data
                 except json.JSONDecodeError:
                     return False, f"响应不是有效的 JSON: {response.text[:100]}"
@@ -254,5 +272,19 @@ class KaipanlaService:
                 return False, f"请求失败，状态码: {response.status_code}, 内容: {response.text[:100]}"
 
         except Exception as e:
-            logger.error(f"Error fetching Kaipanla data: {e}")
+            logger.error(f"Error fetching Kaipanla data ({config_name}): {e}")
             return False, f"抓取异常: {str(e)}"
+
+    @staticmethod
+    def fetch_data():
+        """
+        Fetches call auction data using the stored configuration.
+        """
+        return KaipanlaService._fetch_data_generic('kaipanla_call_auction')
+
+    @staticmethod
+    def fetch_volume_data():
+        """
+        Fetches volume data using the stored configuration.
+        """
+        return KaipanlaService._fetch_data_generic('kaipanla_volume')
