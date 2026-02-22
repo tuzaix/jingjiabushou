@@ -289,7 +289,7 @@ class EastmoneyService(BaseCurlService):
 
             # Sort by asking_amount (index -2) and take top 200
             db_data.sort(key=lambda x: x[-2], reverse=True)
-            db_data = db_data[:200]
+            db_data = db_data[:500]
               
             count = DatabaseManager.execute_update(insert_query, db_data, many=True)
             logger.info(f"Saved {count} call auction records for date {current_date} time {record_time}.")
