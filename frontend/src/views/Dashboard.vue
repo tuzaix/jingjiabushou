@@ -938,6 +938,14 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 2px solid #cf1322; /* Red accent line for card headers */
+  padding-bottom: 10px;
+}
+
+.card-header span {
+  font-size: 20px;
+  font-weight: 700;
+  color: #303133;
 }
 
 /* Top N Card Styles */
@@ -976,8 +984,8 @@ onUnmounted(() => {
 .top-n-card.is-hovered {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  border-color: #e6a23c;
-  background-color: #fdf6ec;
+  border-color: #cf1322; /* Changed to red accent */
+  background-color: #fff1f0; /* Light red background */
 }
 .top-n-header {
   display: flex;
@@ -998,14 +1006,14 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 .board-tag {
-  background-color: #fef0f0;
-  color: #f56c6c;
-  border: 1px solid #fde2e2;
+  background-color: #fff1f0;
+  color: #cf1322;
+  border: 1px solid #ffa39e;
 }
 .broken-board-tag {
-  background-color: #f4f4f5;
-  color: #909399;
-  border: 1px solid #e9e9eb;
+  background-color: #f5f5f5;
+  color: #8c8c8c;
+  border: 1px solid #d9d9d9;
 }
 .top-n-body {
   display: flex;
@@ -1016,19 +1024,19 @@ onUnmounted(() => {
   overflow: hidden; /* Hide overflow */
 }
 .amount-val {
-  font-family: monospace;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
   font-weight: bold;
   font-size: 13px; /* Reduced from 15px */
 }
 .amount-925 {
-  color: #e6a23c; /* Orange/Gold */
+  color: #cf1322; /* Changed to red */
   font-size: 14px; /* Reduced from 16px, still slightly larger */
 }
 .amount-920 {
-  color: #409eff; /* Blue */
+  color: #1890ff; /* Blue */
 }
 .amount-915 {
-  color: #f56c6c; /* Red */
+  color: #faad14; /* Orange/Gold for initial call */
 }
 .separator {
   margin: 0 4px; /* Reduced from 8px */
@@ -1058,9 +1066,9 @@ onUnmounted(() => {
   margin-bottom: 12px;
   color: #303133;
   padding: 8px 12px;
-  background-color: #ecf5ff;
+  background-color: #fff1f0; /* Light red bg */
   border-radius: 4px;
-  border-left: 5px solid #409eff;
+  border-left: 5px solid #cf1322; /* Red accent */
 }
 
 .group-items {
@@ -1105,7 +1113,7 @@ onUnmounted(() => {
   position: absolute;
   top: -10px;
   right: -10px;
-  background-color: #e6a23c;
+  background-color: #faad14;
   color: white;
   font-size: 12px;
   padding: 2px 8px;
@@ -1120,7 +1128,7 @@ onUnmounted(() => {
   position: absolute;
   top: -10px;
   left: -10px;
-  background-color: #f56c6c;
+  background-color: #cf1322;
   color: white;
   font-size: 12px;
   padding: 2px 8px;
@@ -1135,8 +1143,8 @@ onUnmounted(() => {
 .stock-card.is-hovered {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  border-color: #e6a23c;
-  background-color: #fdf6ec;
+  border-color: #cf1322;
+  background-color: #fff1f0;
 }
 
 /* Rank Card */
@@ -1153,8 +1161,8 @@ onUnmounted(() => {
 }
 
 .rank-card.is-hovered {
-  background-color: #fdf6ec;
-  border-color: #e6a23c;
+  background-color: #fff1f0;
+  border-color: #cf1322;
   transform: translateY(-2px);
   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
   z-index: 1;
@@ -1195,6 +1203,7 @@ onUnmounted(() => {
 .stat-card:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-color: #cf1322;
 }
 
 .stat-card.single-col {
@@ -1224,8 +1233,8 @@ onUnmounted(() => {
 }
 
 .vol-bg {
-  background: linear-gradient(135deg, #ecf5ff 0%, #ffffff 100%);
-  border: 1px solid #d9ecff;
+  background: linear-gradient(135deg, #fff1f0 0%, #ffffff 100%);
+  border: 1px solid #ffccc7;
 }
 
 /* Content Styles */
@@ -1270,9 +1279,9 @@ onUnmounted(() => {
   line-height: 1.2;
 }
 
-.stat-value.red { color: #f56c6c; }
-.stat-value.green { color: #67c23a; }
-.stat-value.blue { color: #409eff; }
+.stat-value.red { color: #cf1322; }
+.stat-value.green { color: #52c41a; }
+.stat-value.blue { color: #1890ff; }
 
 .stat-sub-val {
   font-size: 13px;
@@ -1283,7 +1292,7 @@ onUnmounted(() => {
 
 .rank-number.rank-top-1 {
     color: #fff;
-    background-color: #f56c6c;
+    background-color: #cf1322;
   }
   
   .rank-number.rank-top-2 {
