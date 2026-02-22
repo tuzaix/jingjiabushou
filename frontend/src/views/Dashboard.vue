@@ -11,7 +11,7 @@
           <div class="monitor-container" style="display: flex; height: calc(100vh - 180px);">
              <!-- Rank Column -->
              <div style="flex: 0 0 50px; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); height: 100%;">
-                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: var(--text-secondary); text-align: center; flex-shrink: 0;">序号</div>
+                <div class="list-header-title" style="color: var(--text-secondary);">序号</div>
                 <div class="rank-list sub-list" ref="rankListRef" @scroll="handleScroll('rank')" style="flex: 1; overflow-y: auto;">
                    <div v-for="(item, index) in topNList" :key="'rank-' + index" 
                         class="rank-card"
@@ -24,9 +24,9 @@
              </div>
 
              <!-- 9:25 Main List -->
-            <div style="flex: 2; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); padding-right: 10px; padding-left: 10px; height: 100%;">
-               <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: var(--primary-gold); text-align: center; flex-shrink: 0;">9:25 排名</div>
-               <div class="main-list" ref="mainListRef" @scroll="handleScroll('main')" style="flex: 1; overflow-y: auto;">
+             <div style="flex: 2; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); padding-right: 10px; padding-left: 10px; height: 100%;">
+                <div class="list-header-title" style="color: var(--primary-gold);">9:25 排名</div>
+                <div class="main-list" ref="mainListRef" @scroll="handleScroll('main')" style="flex: 1; overflow-y: auto;">
                   <div v-for="(item, index) in topNList" :key="item.code" 
                        class="top-n-card" 
                        :class="{ 'is-hovered': hoveredCode === item.code }"
@@ -64,7 +64,7 @@
             
             <!-- 9:20 List -->
             <div style="flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); padding: 0 10px; height: 100%;">
-               <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: var(--primary-blue); text-align: center; flex-shrink: 0;">9:20 排名</div>
+               <div class="list-header-title" style="color: var(--primary-blue);">9:20 排名</div>
                <div class="sub-list" ref="subList920Ref" @scroll="handleScroll('sub920')" style="flex: 1; overflow-y: auto;">
                   <div v-for="(item, index) in ranking920List" :key="item.code" 
                         class="mini-card"
@@ -81,7 +81,7 @@
 
             <!-- 9:15 List -->
             <div style="flex: 1; display: flex; flex-direction: column; padding-left: 10px; height: 100%;">
-               <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: var(--primary-red); text-align: center; flex-shrink: 0;">9:15 排名</div>
+               <div class="list-header-title" style="color: var(--primary-red);">9:15 排名</div>
                <div class="sub-list" ref="subList915Ref" @scroll="handleScroll('sub915')" style="flex: 1; overflow-y: auto;">
                    <div v-for="(item, index) in ranking915List" :key="item.code" 
                          class="mini-card"
@@ -909,7 +909,18 @@ onUnmounted(() => {
   padding: 5px;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
+/* List Header Title Style */
+.list-header-title {
+  height: 40px;
+  line-height: 40px;
+  background-color: var(--table-header-bg);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-weight: bold;
+  text-align: center;
+  flex-shrink: 0;
+  border: 1px solid var(--border-color);
+}
 .main-list::-webkit-scrollbar,
 .sub-list::-webkit-scrollbar,
 .yesterday-limit-up-container::-webkit-scrollbar {

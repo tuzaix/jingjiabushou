@@ -124,6 +124,7 @@ const handleThemeCommand = (command) => {
     --hover-border: #cf1322;
     --divider-color: #3a3a3a;
     --control-label: #a0a0a0;
+    --table-header-bg: #f5f7fa;
 }
 
 /* Dark Theme */
@@ -138,6 +139,7 @@ const handleThemeCommand = (command) => {
     --hover-border: #cf1322;
     --divider-color: #505050;
     --control-label: #808080;
+    --table-header-bg: #2d2d2d;
 }
 
 /* Eye-care Theme (Warm/Yellowish) */
@@ -152,6 +154,7 @@ const handleThemeCommand = (command) => {
     --hover-border: #FFB74D;
     --divider-color: #D7CCC8;
     --control-label: #D7CCC8;
+    --table-header-bg: #EFE8D0;
 }
 </style>
 
