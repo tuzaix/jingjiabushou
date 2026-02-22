@@ -3,6 +3,7 @@ import requests
 import re
 import datetime
 import logging
+import shlex
 from utils.database import DatabaseManager
 
 logger = logging.getLogger(__name__)
@@ -11,53 +12,107 @@ class JiuyanService:
     @staticmethod
     def parse_curl_command(curl_command):
         """
-        Parses a curl command to extract URL, headers, and data.
+        Parses a curl command to extract URL, headers, and data using shlex for better shell tokenization.
         """
-        # Clean up newlines and backslashes
-        curl_command = curl_command.replace('\\\n', ' ').replace('\\', '')
+        try:
+            # Clean up line continuations just in case, though shlex handles them if they are proper
+            # But users might paste with newlines that shlex might complain about if not escaped
+            # So let's join lines first if they end with \
+            cleaned_command = curl_command.replace('\\\n', ' ').replace('\\\r\n', ' ')
+            # Also remove newlines that are not escaped? No, shlex.split handles strings with newlines if quoted.
+            # But if the user pasted a multiline command without backslashes, shlex might fail or treat them as separate commands.
+            # Let's just replace all newlines with spaces to be safe, assuming it's one command.
+            cleaned_command = cleaned_command.replace('\n', ' ').replace('\r', ' ')
+            
+            tokens = shlex.split(cleaned_command)
+        except Exception as e:
+            logger.error(f"Failed to parse curl command with shlex: {e}")
+            # Fallback to regex or just fail
+            raise ValueError(f"Invalid curl command format: {e}")
+
+        url = None
+        method = "GET"
+        headers = {}
+        data_str = None
         
-        # Extract URL
-        url_match = re.search(r"curl\s+'([^']+)'", curl_command) or re.search(r'curl\s+"([^"]+)"', curl_command)
-        url = url_match.group(1) if url_match else None
-        
-        if not url:
-            # Try without quotes
-            url_match = re.search(r"curl\s+(\S+)", curl_command)
-            url = url_match.group(1) if url_match else None
+        # Iterate tokens
+        i = 0
+        while i < len(tokens):
+            token = tokens[i]
+            
+            if token == 'curl':
+                i += 1
+                continue
+                
+            if token.startswith('http'):
+                url = token
+                i += 1
+                continue
+                
+            if token in ('-X', '--request'):
+                if i + 1 < len(tokens):
+                    method = tokens[i+1]
+                    i += 2
+                else:
+                    i += 1
+                continue
+                
+            if token in ('-H', '--header'):
+                if i + 1 < len(tokens):
+                    header_str = tokens[i+1]
+                    if ':' in header_str:
+                        key, value = header_str.split(':', 1)
+                        headers[key.strip()] = value.strip()
+                    i += 2
+                else:
+                    i += 1
+                continue
+                
+            if token in ('-d', '--data', '--data-raw', '--data-binary', '--data-ascii'):
+                if i + 1 < len(tokens):
+                    data_str = tokens[i+1]
+                    method = "POST" # Implied POST
+                    i += 2
+                else:
+                    i += 1
+                continue
+                
+            if token in ('--compressed',):
+                # headers['Accept-Encoding'] = 'gzip, deflate, br' # requests handles this automatically usually
+                i += 1
+                continue
+                
+            # Skip unknown flags
+            if token.startswith('-'):
+                i += 1
+                if i < len(tokens) and not tokens[i].startswith('-'):
+                    i += 1
+                continue
+                
+            # If we found a standalone string and don't have a URL yet, it might be the URL
+            if not url and not token.startswith('-'):
+                url = token
+                i += 1
+                continue
+                
+            i += 1
 
         if not url:
             raise ValueError("Could not extract URL from curl command")
 
-        # Extract headers
-        headers = {}
-        header_matches = re.findall(r"-H\s+'([^']+)'", curl_command) or re.findall(r'-H\s+"([^"]+)"', curl_command)
-        for header in header_matches:
-            if ':' in header:
-                key, value = header.split(':', 1)
-                headers[key.strip()] = value.strip()
-
-        # Extract cookies
-        cookie_match = re.search(r"-b\s+'([^']+)'", curl_command) or re.search(r'-b\s+"([^"]+)"', curl_command)
-        if not cookie_match:
-            cookie_match = re.search(r"--cookie\s+'([^']+)'", curl_command) or re.search(r'--cookie\s+"([^"]+)"', curl_command)
-        
-        if cookie_match:
-            headers['Cookie'] = cookie_match.group(1)
-
-        # Extract data
-        data_match = re.search(r"--data-raw\s+'([^']+)'", curl_command) or re.search(r'--data-raw\s+"([^"]+)"', curl_command)
-        data_str = data_match.group(1) if data_match else None
-        
-        try:
-            data = json.loads(data_str) if data_str else {}
-        except json.JSONDecodeError:
-            data = {} 
+        # Parse body if present
+        body = None
+        if data_str:
+            try:
+                body = json.loads(data_str)
+            except json.JSONDecodeError:
+                body = data_str
 
         return {
             "url": url,
             "headers": headers,
-            "body": data,
-            "method": "POST"
+            "body": body,
+            "method": method
         }
 
     @staticmethod
@@ -66,6 +121,9 @@ class JiuyanService:
             parsed = JiuyanService.parse_curl_command(curl_command)
             
             # Save to DB
+            # We store body as JSON string if it's a dict, or raw string otherwise
+            body_to_store = json.dumps(parsed['body']) if isinstance(parsed['body'], (dict, list)) else parsed['body']
+            
             query = """
                 INSERT INTO api_configs (name, url, method, headers, body) 
                 VALUES (%s, %s, %s, %s, %s) AS new
@@ -80,7 +138,7 @@ class JiuyanService:
                 parsed['url'], 
                 parsed['method'], 
                 json.dumps(parsed['headers']), 
-                json.dumps(parsed['body'])
+                body_to_store
             ))
             return True, "配置更新成功"
         except Exception as e:
@@ -128,11 +186,22 @@ class JiuyanService:
             if result:
                 row = result[0]
                 if isinstance(row['headers'], str):
-                    row['headers'] = json.loads(row['headers'])
-                if isinstance(row['body'], str):
-                    row['body'] = json.loads(row['body'])
+                    try:
+                        row['headers'] = json.loads(row['headers'])
+                    except:
+                        row['headers'] = {}
                 
-                # Reconstruct curl command
+                # Body might be a JSON string representing a dict, or just a string
+                # If it was stored as JSON string of a dict, we load it.
+                if row['body']:
+                    try:
+                        # Try to parse it as JSON
+                        row['body'] = json.loads(row['body'])
+                    except:
+                        # If fail, keep as is
+                        pass
+                
+                # Reconstruct curl command for display
                 row['curl'] = JiuyanService.generate_curl_command(row)
                 return row
             return None
@@ -142,32 +211,52 @@ class JiuyanService:
 
     @staticmethod
     def fetch_data(date_str=None):
+        """
+        Fetch data from Jiuyan.
+        If date_str is provided, it attempts to inject it into the request body (if body is a dict).
+        If date_str is None (e.g. testing), it uses the body as configured.
+        """
         config = JiuyanService.get_config()
         if not config:
             return False, "未找到配置"
             
-        if not date_str:
-            yesterday = datetime.date.today() - datetime.timedelta(days=1)
-            date_str = yesterday.strftime('%Y-%m-%d')
-            
         body = config['body']
-        if isinstance(body, dict):
-            body['date'] = date_str
         
+        if date_str:
+            # If date is provided (Scheduler mode), override it
+            if isinstance(body, dict):
+                body['date'] = date_str
+            else:
+                logger.warning("date_str provided but body is not a dict, cannot inject date.")
+        
+        # Remove Content-Length header as requests will recalculate it
+        if 'Content-Length' in config['headers']:
+            del config['headers']['Content-Length']
+            
+        # Also remove Host header as it might cause issues if IP changed
+        if 'Host' in config['headers']:
+             del config['headers']['Host']
+
         try:
+            logger.info(f"Fetching Jiuyan data. URL: {config['url']}, Method: {config['method']}")
+            
             response = requests.request(
                 method=config['method'],
                 url=config['url'],
                 headers=config['headers'],
-                json=body,
+                json=body if isinstance(body, (dict, list)) else None,
+                data=body if not isinstance(body, (dict, list)) else None,
                 timeout=30
             )
             
             if response.status_code == 200:
-                data = response.json()
-                return True, data
+                try:
+                    data = response.json()
+                    return True, data
+                except json.JSONDecodeError:
+                    return False, f"Invalid JSON response: {response.text[:200]}"
             else:
-                return False, f"HTTP Error: {response.status_code} - {response.text}"
+                return False, f"HTTP Error: {response.status_code} - {response.text[:200]}"
                 
         except Exception as e:
             logger.error(f"Error fetching Jiuyan data: {e}")
@@ -175,9 +264,18 @@ class JiuyanService:
     
     @staticmethod
     def sync_data(date_str=None):
-        success, result = JiuyanService.fetch_data(date_str)
-        import pprint 
-        pprint.pprint(result)
+        """
+        Fetch and sync data to DB.
+        """
+        # Determine date if not provided (for sync logic, we need to know what date we are syncing)
+        target_date_str = date_str
+        if not target_date_str:
+            yesterday = datetime.date.today() - datetime.timedelta(days=1)
+            target_date_str = yesterday.strftime('%Y-%m-%d')
+            
+        # Call fetch_data with the determined date (so it gets injected)
+        success, result = JiuyanService.fetch_data(target_date_str)
+        
         if not success:
             return False, result
             
@@ -185,101 +283,40 @@ class JiuyanService:
         if not data_list:
              return True, "No data found"
 
-        # Determine date
-        if not date_str:
-            yesterday = datetime.date.today() - datetime.timedelta(days=1)
-            date_str = yesterday.strftime('%Y-%m-%d')
-            
         try:
             # Delete existing data for the date
-            DatabaseManager.execute_update("DELETE FROM yesterday_limit_up WHERE date = %s", (date_str,))
+            DatabaseManager.execute_update(
+                "DELETE FROM jiuyan_limit_up WHERE date = %s", 
+                (target_date_str,)
+            )
             
-            insert_query = """
-                INSERT INTO yesterday_limit_up 
-                (date, code, name, limit_up_type, consecutive_days, days_boards, limit_up_form, first_limit_up_time, last_limit_up_time, open_count, expound, consecutive_boards) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            # Insert new data
+            count = 0
+            query = """
+                INSERT INTO jiuyan_limit_up 
+                (date, code, name, reason_type, reason_info, limit_up_type, plate_name)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
             
-            stock_map = {}
-            
+            params = []
             for item in data_list:
-                category = item.get('name', '')
-                stock_list = item.get('list', [])
+                # Adjust field names based on actual API response structure
+                # This is a guess based on common structures, might need adjustment
+                code = item.get('code')
+                name = item.get('name')
+                reason_type = item.get('reason_type', '') # e.g. 首板, 2连板
+                reason_info = item.get('reason_info', '') # e.g. 华为概念
+                limit_up_type = item.get('limit_up_type', '') # e.g. 自然涨停
+                plate_name = item.get('plate_name', '')
                 
-                for stock in stock_list:
-                    code_raw = stock.get('code', '')
-                    # Strip prefix (e.g., sz001896 -> 001896)
-                    code = re.sub(r'^\D+', '', code_raw)
-                    if not code: continue
-                    
-                    if code not in stock_map:
-                        name = stock.get('name', '')
-                        article = stock.get('article', {}) or {}
-                        action_info = article.get('action_info', {}) or {}
-                        
-                        # 解析连续天数和板数
-                        num_str = action_info.get('num', '') # "3天3板"
-                        # 解析涨停时间
-                        limit_up_time = action_info.get('time', '') # "09:25:00"
-                        
-                        # 解析连续天数
-                        try:
-                            consecutive_days = int(action_info.get('day', 1))
-                        except:
-                            consecutive_days = 1
-                        # 解析连续板数
-                        try:
-                            consecutive_boards = int(action_info.get('edition', 1))
-                        except:
-                            consecutive_boards = 1
-                        # 几天几板
-                        days_boards = num_str if num_str else '首板'
-
-                        # 解析扩展信息
-                        expound = action_info.get('expound', '')
-                        
-                        stock_map[code] = {
-                            'date': date_str,
-                            'code': code,
-                            'name': name,
-                            'categories': [category],
-                            'consecutive_days': consecutive_days,
-                            'days_boards': days_boards,
-                            'limit_up_form': '',
-                            'first_time': limit_up_time,
-                            'last_time': limit_up_time,
-                            'open_count': 0,
-                            'expound': expound,
-                            'consecutive_boards': consecutive_boards
-                        }
-                    else:
-                        if category not in stock_map[code]['categories']:
-                            stock_map[code]['categories'].append(category)
+                if code:
+                    params.append((target_date_str, code, name, reason_type, reason_info, limit_up_type, plate_name))
+                    count += 1
             
-            final_data = []
-            for code, info in stock_map.items():
-                limit_up_type = '+'.join(info['categories'])
-                # Truncate to 50 chars to fit DB column
-                if len(limit_up_type) > 50:
-                    limit_up_type = limit_up_type[:47] + "..."
-                    
-                final_data.append((
-                    info['date'],
-                    info['code'],
-                    info['name'],
-                    limit_up_type,
-                    info['consecutive_days'],
-                    info['days_boards'],
-                    info['limit_up_form'],
-                    info['first_time'],
-                    info['last_time'],
-                    info['open_count'],
-                    info['expound'],
-                    info['consecutive_boards']
-                ))
+            if params:
+                DatabaseManager.execute_batch(query, params)
                 
-            count = DatabaseManager.execute_update(insert_query, final_data, many=True)
-            return True, f"Synced {count} records for date {date_str}"
+            return True, f"Successfully synced {count} records for {target_date_str}"
             
         except Exception as e:
             logger.error(f"Error syncing Jiuyan data: {e}")
