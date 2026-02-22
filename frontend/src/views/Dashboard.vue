@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard-container">
-    <div class="actions-bar">
-      <div class="left-actions">
+    <div class="actions-bar" style="justify-content: flex-end;">
+      <div class="right-actions">
         <el-date-picker
           v-model="selectedDate"
           type="date"
@@ -10,30 +10,30 @@
           value-format="YYYY-MM-DD"
           :disabled-date="disabledDate"
           @change="handleDateChange"
-          style="width: 150px; margin-right: 10px;"
+          style="width: 140px; margin-right: 15px;"
         />
-        <el-button type="primary" @click="fetchTopN">刷新竞价TopN</el-button>
-        <el-button type="success" @click="fetchYesterdayLimitUp">刷新昨日涨停</el-button>
-        <el-button type="info" @click="fetchLimitUp925">刷新一字板</el-button>
-      </div>
-      <div class="right-actions">
-        <el-switch
-          v-model="autoRefresh"
-          active-text="自动刷新"
-          @change="handleAutoRefreshChange"
-        />
+        
+        <div style="display: flex; align-items: center; margin-right: 10px;">
+            <el-icon style="font-size: 18px; margin-right: 5px; color: #409EFF;"><Refresh /></el-icon>
+            <el-switch
+              v-model="autoRefresh"
+              @change="handleAutoRefreshChange"
+            />
+        </div>
+
         <el-select
           v-model="refreshInterval"
-          placeholder="刷新间隔"
-          style="width: 120px; margin-left: 10px;"
+          placeholder="间隔"
+          style="width: 80px;"
           @change="handleIntervalChange"
           :disabled="!autoRefresh"
+          size="default"
         >
-          <el-option label="3秒" :value="3000" />
-          <el-option label="5秒" :value="5000" />
-          <el-option label="10秒" :value="10000" />
-          <el-option label="30秒" :value="30000" />
-          <el-option label="60秒" :value="60000" />
+          <el-option label="3s" :value="3000" />
+          <el-option label="5s" :value="5000" />
+          <el-option label="10s" :value="10000" />
+          <el-option label="30s" :value="30000" />
+          <el-option label="60s" :value="60000" />
         </el-select>
       </div>
     </div>
@@ -51,7 +51,7 @@
              <div style="flex: 0 0 50px; display: flex; flex-direction: column; border-right: 1px solid #eee; height: 100%;">
                 <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #909399; text-align: center; flex-shrink: 0;">序号</div>
                 <div class="rank-list sub-list" ref="rankListRef" @scroll="handleScroll('rank')" style="flex: 1; overflow-y: auto;">
-                   <div v-for="(item, index) in topNList" :key="'rank-' + index" 
+                   <div v-for="(item, index) in processedTopNList" :key="'rank-' + index" 
                         class="rank-card"
                         :class="{ 'is-hovered': hoveredCode === item.code }"
                         @mouseenter="handleMouseEnter(item.code)" 
@@ -65,7 +65,7 @@
             <div style="flex: 2; display: flex; flex-direction: column; border-right: 1px solid #eee; padding-right: 10px; padding-left: 10px; height: 100%;">
                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #e6a23c; text-align: center; flex-shrink: 0;">9:25 排名</div>
                <div class="main-list" ref="mainListRef" @scroll="handleScroll('main')" style="flex: 1; overflow-y: auto;">
-                  <div v-for="(item, index) in topNList" :key="item.code" 
+                  <div v-for="(item, index) in processedTopNList" :key="item.code" 
                        class="top-n-card" 
                        :class="{ 'is-hovered': hoveredCode === item.code }"
                        @mouseenter="handleMouseEnter(item.code)" 
@@ -96,7 +96,7 @@
                         <el-icon><component :is="getRankChangeInfo(item.code, index).icon" /></el-icon>
                      </div>
                   </div>
-                  <div v-if="topNList.length === 0" class="no-data">暂无数据</div>
+                  <div v-if="processedTopNList.length === 0" class="no-data">暂无数据</div>
                </div>
             </div>
             
@@ -315,7 +315,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import axios from 'axios'
-import { CaretTop, CaretBottom } from '@element-plus/icons-vue'
+import { CaretTop, CaretBottom, Refresh } from '@element-plus/icons-vue'
 
 const topNList = ref([])
 const ranking920List = ref([])
@@ -470,12 +470,34 @@ const splitSector = (sectorStr) => {
   return sectorStr.split(/[\s,;；、]+/).filter(s => s && s.trim().length > 0)
 }
 
+const yesterdayLimitUpMap = computed(() => {
+  const map = {}
+  if (yesterdayLimitUpList.value) {
+    yesterdayLimitUpList.value.forEach(item => {
+      map[item.code] = item
+    })
+  }
+  return map
+})
+
+const processedTopNList = computed(() => {
+  if (!topNList.value) return []
+  return topNList.value.map(item => {
+    const yesterdayItem = yesterdayLimitUpMap.value[item.code]
+    if (yesterdayItem && yesterdayItem.sector) {
+      // Create a shallow copy to avoid mutating the original item and to trigger reactivity
+      return { ...item, sector: yesterdayItem.sector }
+    }
+    return item
+  })
+})
+
 // Compute frequency of each sector in the Top N list
 const sectorFrequency = computed(() => {
   const freq = {}
-  if (!topNList.value) return freq
+  if (!processedTopNList.value) return freq
   
-  topNList.value.forEach(item => {
+  processedTopNList.value.forEach(item => {
     if (!item.sector) return
     const sectors = splitSector(item.sector)
     sectors.forEach(sec => {
