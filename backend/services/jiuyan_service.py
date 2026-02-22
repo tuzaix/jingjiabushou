@@ -217,7 +217,7 @@ class JiuyanService:
         If date_str is None (e.g. testing), it uses the body as configured.
         """
         config = JiuyanService.get_config()
-
+        print(config)
         if not config:
             return False, "未找到配置"
             

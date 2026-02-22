@@ -157,5 +157,6 @@ if __name__ == "__main__":
     # get_all_stock_codes()
     # fetch_call_auction_data()
     # fetch_yesterday_limit_up()
-    JiuyanService.sync_data('2026-02-13')
+    #JiuyanService.sync_data('2026-02-13')
+    fetch_yesterday_limit_up('2026-02-13')
     pass
