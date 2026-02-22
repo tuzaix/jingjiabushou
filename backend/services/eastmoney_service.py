@@ -140,6 +140,31 @@ class EastmoneyService:
             
             DatabaseManager.execute_update(query, params)
             
+            # Auto-update stock_list from secids in the configuration
+            try:
+                secids = None
+                body_obj = config.get('body')
+                
+                if isinstance(body_obj, dict):
+                    secids = body_obj.get('secids')
+                elif isinstance(body_obj, str):
+                    # Check if it contains secids parameter
+                    if 'secids=' in body_obj:
+                        from urllib.parse import parse_qs
+                        # parse_qs handles url decoding
+                        parsed = parse_qs(body_obj)
+                        if 'secids' in parsed:
+                            secids = parsed['secids'][0]
+                
+                if secids:
+                    logger.info("Found secids in configuration, updating stock_list...")
+                    # Local import to avoid circular dependency
+                    from .sync_service import SyncService
+                    SyncService.update_stock_list_from_secids(secids)
+                    
+            except Exception as e:
+                logger.error(f"Error auto-updating stock_list from secids: {e}")
+            
             return True, "配置更新成功"
 
         except Exception as e:

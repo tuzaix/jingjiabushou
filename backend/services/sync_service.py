@@ -24,8 +24,19 @@ class SyncService:
     def get_all_stock_codes():
         try:
             stock_zh_a_spot_em_df = ak.stock_zh_a_spot_em()
-            codes = stock_zh_a_spot_em_df['代码'].tolist()
-            names = stock_zh_a_spot_em_df['名称'].tolist()
+            
+            # Filter out ST, Delisted, and New Third Board/Beijing stocks
+            # 1. Remove ST and Delisted based on name
+            mask_valid_name = ~stock_zh_a_spot_em_df['名称'].str.contains('ST|退')
+            
+            # 2. Keep only Main Board (00, 60), ChiNext (30), STAR Market (68)
+            # Exclude Beijing (8, 4, 92) and B-shares (900, 200)
+            mask_valid_code = stock_zh_a_spot_em_df['代码'].str.match('^(00|30|60|68)')
+            
+            filtered_df = stock_zh_a_spot_em_df[mask_valid_name & mask_valid_code]
+            
+            codes = filtered_df['代码'].tolist()
+            names = filtered_df['名称'].tolist()
             
             DatabaseManager.execute_update("TRUNCATE TABLE stock_list")
             
@@ -36,11 +47,94 @@ class SyncService:
                 data.append((code, name, market))
                 
             count = DatabaseManager.execute_update(insert_query, data, many=True)
-            logger.info(f"Updated stock list with {count} stocks.")
+            logger.info(f"Updated stock list with {count} stocks (Filtered ST, Delisted, and non-A-share).")
             return data
         except Exception as e:
             logger.error(f"Error fetching stock list: {e}")
             return []
+
+    @staticmethod
+    def update_stock_list_from_secids(secids):
+        """
+        Updates stock_list table based on the provided secids list.
+        secids format: ["1.600000", "0.000001"] or "1.600000,0.000001"
+        """
+        try:
+            if not secids:
+                return 0
+                
+            if isinstance(secids, str):
+                secids = secids.split(',')
+                
+            target_codes = set()
+            for secid in secids:
+                # Format is market.code
+                parts = secid.split('.')
+                if len(parts) == 2:
+                    target_codes.add(parts[1])
+            
+            if not target_codes:
+                logger.warning("No valid codes found in secids.")
+                return 0
+            
+            logger.info(f"Updating stock_list with {len(target_codes)} codes from secids...")
+            
+            # Fetch all stock info to get names
+            stock_zh_a_spot_em_df = ak.stock_zh_a_spot_em()
+            
+            # Filter by target codes first
+            df_subset = stock_zh_a_spot_em_df[stock_zh_a_spot_em_df['代码'].isin(target_codes)]
+            
+            # Apply exclusion filters (ST, Delisted, New Third Board/Beijing)
+            mask_valid_name = ~df_subset['名称'].str.contains('ST|退')
+            mask_valid_code = df_subset['代码'].str.match('^(00|30|60|68)')
+            
+            filtered_df = df_subset[mask_valid_name & mask_valid_code]
+            
+            # Log dropped count
+            dropped_count = len(df_subset) - len(filtered_df)
+            if dropped_count > 0:
+                logger.info(f"Filtered out {dropped_count} stocks (ST/Delisted/New Third Board).")
+            
+            # Prepare data
+            codes = filtered_df['代码'].tolist()
+            names = filtered_df['名称'].tolist()
+            
+            # Handle codes that might not be in the fetched list (e.g. indices or new stocks)
+            # Note: If they were filtered out by name/code logic above, we shouldn't add them back as 'Unknown'
+            # We only add back 'Unknown' if they were VALID codes but just not found in akshare data (rare)
+            
+            found_codes = set(codes)
+            # Only consider missing codes that WOULD have been valid
+            potential_missing = target_codes - set(df_subset['代码'].tolist()) # Codes not in akshare at all
+            
+            valid_missing_codes = []
+            for code in potential_missing:
+                # Check if it looks like a valid code
+                if code.startswith(('00', '30', '60', '68')):
+                    valid_missing_codes.append(code)
+            
+            if valid_missing_codes:
+                logger.warning(f"Could not find names for {len(valid_missing_codes)} valid codes: {valid_missing_codes[:10]}...")
+                for code in valid_missing_codes:
+                    codes.append(code)
+                    names.append('Unknown') # Placeholder name
+
+            DatabaseManager.execute_update("TRUNCATE TABLE stock_list")
+            
+            insert_query = "INSERT INTO stock_list (code, name, market) VALUES (%s, %s, %s)"
+            data = []
+            for code, name in zip(codes, names):
+                market = 1 if code.startswith('6') else 0 
+                data.append((code, name, market))
+                
+            count = DatabaseManager.execute_update(insert_query, data, many=True)
+            logger.info(f"Successfully updated stock list with {count} stocks.")
+            return count
+            
+        except Exception as e:
+            logger.error(f"Error updating stock list from secids: {e}")
+            return 0
 
     @staticmethod
     def fetch_call_auction_data(stock_list_data=None, date_str=None):
@@ -152,9 +246,9 @@ class SyncService:
                 record_time = '09:25:00'
             
             insert_query = """
-            INSERT INTO call_auction_data 
-            (date, time, code, name, sector, price, bidding_percent, bidding_amount, asking_amount)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            REPLACE INTO call_auction_data 
+            (date, time, code, name, sector, price, bidding_percent, bidding_amount, asking_amount, yidongleixing)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             
             def get_val(item, key, default=0):
@@ -170,24 +264,35 @@ class SyncService:
             for idx, item in enumerate(data):
                 code = item.get('f12', '')
                 name = item.get('f14', '')
+                # 过滤掉所有的st, 退市票
+                if name.startswith('ST') or name.startswith('*') or name.endswith('退'):
+                    continue
                 sector = item.get('f100', '') # f100: Sector/Concept
                 
                 # f2: Latest Price
                 price = get_val(item, 'f2', 0)
+                if price == 0 and bidding_amount == 0:
+                    continue
                 
                 # f615: Auction Increase (bidding_percent)
                 bidding_percent = get_val(item, 'f615', 0)
                 
                 # f616: Auction Amount (bidding_amount)
                 bidding_amount = get_val(item, 'f616', 0)
+
+                # 未知字段
+                yidongleixing = get_val(item, 'f265', '')
                 
                 # f618: Unmatched Amount (asking_amount)
                 # Note: f618 is "Bid Unmatched Amount" (Limit Up Bid Amount)
                 # We map it to asking_amount as per table schema availability
                 asking_amount = get_val(item, 'f618', 0) + bidding_amount
                 
-                db_data.append((current_date, record_time, code, name, sector, price, bidding_percent, bidding_amount, asking_amount))
-                
+                db_data.append((current_date, record_time, code, name, sector, price, bidding_percent, bidding_amount, asking_amount, yidongleixing))
+
+            db_data.sort(key=lambda x: x[-2], reverse=True)
+            db_data = db_data[:200]
+              
             count = DatabaseManager.execute_update(insert_query, db_data, many=True)
             logger.info(f"Saved {count} call auction records for date {current_date} time {record_time}.")
         except Exception as e:
