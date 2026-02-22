@@ -10,8 +10,8 @@
           </template>
           <div class="monitor-container" style="display: flex; height: calc(100vh - 180px);">
              <!-- Rank Column -->
-             <div style="flex: 0 0 50px; display: flex; flex-direction: column; border-right: 1px solid #eee; height: 100%;">
-                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #909399; text-align: center; flex-shrink: 0;">序号</div>
+             <div style="flex: 0 0 50px; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); height: 100%;">
+                <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: var(--text-secondary); text-align: center; flex-shrink: 0;">序号</div>
                 <div class="rank-list sub-list" ref="rankListRef" @scroll="handleScroll('rank')" style="flex: 1; overflow-y: auto;">
                    <div v-for="(item, index) in topNList" :key="'rank-' + index" 
                         class="rank-card"
@@ -24,8 +24,8 @@
              </div>
 
              <!-- 9:25 Main List -->
-            <div style="flex: 2; display: flex; flex-direction: column; border-right: 1px solid #eee; padding-right: 10px; padding-left: 10px; height: 100%;">
-               <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #e6a23c; text-align: center; flex-shrink: 0;">9:25 排名</div>
+            <div style="flex: 2; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); padding-right: 10px; padding-left: 10px; height: 100%;">
+               <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: var(--primary-gold); text-align: center; flex-shrink: 0;">9:25 排名</div>
                <div class="main-list" ref="mainListRef" @scroll="handleScroll('main')" style="flex: 1; overflow-y: auto;">
                   <div v-for="(item, index) in topNList" :key="item.code" 
                        class="top-n-card" 
@@ -63,8 +63,8 @@
             </div>
             
             <!-- 9:20 List -->
-            <div style="flex: 1; display: flex; flex-direction: column; border-right: 1px solid #eee; padding: 0 10px; height: 100%;">
-               <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #409eff; text-align: center; flex-shrink: 0;">9:20 排名</div>
+            <div style="flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); padding: 0 10px; height: 100%;">
+               <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: var(--primary-blue); text-align: center; flex-shrink: 0;">9:20 排名</div>
                <div class="sub-list" ref="subList920Ref" @scroll="handleScroll('sub920')" style="flex: 1; overflow-y: auto;">
                   <div v-for="(item, index) in ranking920List" :key="item.code" 
                         class="mini-card"
@@ -81,7 +81,7 @@
 
             <!-- 9:15 List -->
             <div style="flex: 1; display: flex; flex-direction: column; padding-left: 10px; height: 100%;">
-               <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: #f56c6c; text-align: center; flex-shrink: 0;">9:15 排名</div>
+               <div class="list-header-title" style="margin-bottom: 10px; font-weight: bold; color: var(--primary-red); text-align: center; flex-shrink: 0;">9:15 排名</div>
                <div class="sub-list" ref="subList915Ref" @scroll="handleScroll('sub915')" style="flex: 1; overflow-y: auto;">
                    <div v-for="(item, index) in ranking915List" :key="item.code" 
                          class="mini-card"
@@ -109,7 +109,7 @@
           <!-- Custom Layout for Yesterday Limit Up Performance -->
           <div class="yesterday-limit-up-container" style="height: calc(100vh - 180px); overflow-y: auto; padding: 20px;">
              <div v-for="group in groupedYesterdayLimitUp" :key="group.key" class="limit-up-group">
-                <div class="group-label" :style="group.rate >= 50 ? { color: '#f56c6c' } : {}">{{ group.label }}</div>
+                <div class="group-label" :style="group.rate >= 50 ? { color: 'var(--primary-red)' } : {}">{{ group.label }}</div>
                 <div class="group-items">
                    <div v-for="item in group.items" :key="item.code" class="stock-card"
                         :class="{ 'is-hovered': hoveredCode === item.code }"
@@ -125,8 +125,8 @@
                       </div>
                       <div class="stock-info amount" title="成交额 / 涨停委买额">
                         <span>{{ formatAmount(item.bidding_amount) }}</span>
-                        <span style="color: #909399; margin: 0 4px;">/</span>
-                        <span style="color: #E6A23C;">{{ formatAmount(item.asking_amount) }}</span>
+                        <span style="color: var(--text-secondary); margin: 0 4px;">/</span>
+                        <span style="color: var(--primary-gold);">{{ formatAmount(item.asking_amount) }}</span>
                       </div>
                       <div style="display: flex; margin-left: 10px;">
                         <span v-for="sec in getSortedLimitUpSectors(item.sector).slice(0, 2)" :key="sec" class="stock-tag" :style="getLimitUpHeatStyle(sec)">{{ sec }}</span>
@@ -938,14 +938,14 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 2px solid #cf1322; /* Red accent line for card headers */
+  border-bottom: 2px solid var(--primary-red); /* Red accent line for card headers */
   padding-bottom: 10px;
 }
 
 .card-header span {
   font-size: 20px;
   font-weight: 700;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 /* Top N Card Styles */
@@ -955,10 +955,10 @@ onUnmounted(() => {
 .top-n-card {
   position: relative;
   padding: 8px;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   margin-bottom: 6px;
-  background: #fff;
+  background: var(--card-bg);
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   transition: all 0.2s;
   font-weight: 600;
@@ -984,8 +984,8 @@ onUnmounted(() => {
 .top-n-card.is-hovered {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  border-color: #cf1322; /* Changed to red accent */
-  background-color: #fff1f0; /* Light red background */
+  border-color: var(--hover-border); /* Changed to red accent */
+  background-color: var(--hover-bg); /* Light red background */
 }
 .top-n-header {
   display: flex;
@@ -995,7 +995,7 @@ onUnmounted(() => {
 .stock-name {
   font-size: 15px;
   font-weight: bold;
-  color: #303133;
+  color: var(--text-primary);
   margin-right: 8px;
 }
 .stock-tag {
@@ -1006,20 +1006,20 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 .board-tag {
-  background-color: #fff1f0;
-  color: #cf1322;
-  border: 1px solid #ffa39e;
+  background-color: var(--hover-bg);
+  color: var(--primary-red);
+  border: 1px solid var(--hover-border);
 }
 .broken-board-tag {
-  background-color: #f5f5f5;
-  color: #8c8c8c;
-  border: 1px solid #d9d9d9;
+  background-color: var(--bg-color);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
 }
 .top-n-body {
   display: flex;
   align-items: center;
   font-size: 13px; /* Reduced from 14px */
-  color: #606266;
+  color: var(--text-secondary);
   white-space: nowrap; /* Prevent wrapping */
   overflow: hidden; /* Hide overflow */
 }
@@ -1029,18 +1029,18 @@ onUnmounted(() => {
   font-size: 13px; /* Reduced from 15px */
 }
 .amount-925 {
-  color: #cf1322; /* Changed to red */
+  color: var(--primary-red); /* Changed to red */
   font-size: 14px; /* Reduced from 16px, still slightly larger */
 }
 .amount-920 {
-  color: #1890ff; /* Blue */
+  color: var(--primary-blue); /* Blue */
 }
 .amount-915 {
-  color: #faad14; /* Orange/Gold for initial call */
+  color: var(--primary-gold); /* Orange/Gold for initial call */
 }
 .separator {
   margin: 0 4px; /* Reduced from 8px */
-  color: #dcdfe6;
+  color: var(--border-color);
 }
 .change-val {
   margin-left: auto;
@@ -1056,7 +1056,7 @@ onUnmounted(() => {
   margin-bottom: 15px;
   display: flex;
   flex-direction: column;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 10px;
 }
 
@@ -1064,11 +1064,11 @@ onUnmounted(() => {
   font-weight: bold;
   font-size: 16px;
   margin-bottom: 12px;
-  color: #303133;
+  color: var(--text-primary);
   padding: 8px 12px;
-  background-color: #fff1f0; /* Light red bg */
+  background-color: var(--hover-bg); /* Light red bg */
   border-radius: 4px;
-  border-left: 5px solid #cf1322; /* Red accent */
+  border-left: 5px solid var(--primary-red); /* Red accent */
 }
 
 .group-items {
@@ -1080,7 +1080,7 @@ onUnmounted(() => {
 .stock-card {
   width: auto;
   min-width: 100px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 12px 16px;
   margin: 0;
@@ -1088,7 +1088,7 @@ onUnmounted(() => {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  background-color: #fafafa;
+  background-color: var(--card-bg);
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   transition: all 0.2s;
   flex-grow: 0;
@@ -1104,7 +1104,6 @@ onUnmounted(() => {
   font-size: 16px;
   font-weight: bold;
 }
-
 .stock-card .stock-tag {
   font-size: 14px;
 }
@@ -1113,7 +1112,7 @@ onUnmounted(() => {
   position: absolute;
   top: -10px;
   right: -10px;
-  background-color: #faad14;
+  background-color: var(--primary-gold);
   color: white;
   font-size: 12px;
   padding: 2px 8px;
@@ -1128,7 +1127,7 @@ onUnmounted(() => {
   position: absolute;
   top: -10px;
   left: -10px;
-  background-color: #cf1322;
+  background-color: var(--primary-red);
   color: white;
   font-size: 12px;
   padding: 2px 8px;
@@ -1143,8 +1142,8 @@ onUnmounted(() => {
 .stock-card.is-hovered {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  border-color: #cf1322;
-  background-color: #fff1f0;
+  border-color: var(--hover-border);
+  background-color: var(--hover-bg);
 }
 
 /* Rank Card */
@@ -1154,15 +1153,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid #ebeef5;
-  background-color: #fff;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--card-bg);
   margin-bottom: 6px;
   transition: all 0.2s;
 }
 
 .rank-card.is-hovered {
-  background-color: #fff1f0;
-  border-color: #cf1322;
+  background-color: var(--hover-bg);
+  border-color: var(--hover-border);
   transform: translateY(-2px);
   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
   z-index: 1;
@@ -1172,7 +1171,7 @@ onUnmounted(() => {
 .rank-number {
     font-size: 14px;
     font-weight: bold;
-    color: #909399;
+    color: var(--text-secondary);
     width: 24px;
     height: 24px;
     line-height: 24px;
@@ -1196,14 +1195,14 @@ onUnmounted(() => {
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   transition: all 0.2s;
   min-height: 60px;
-  background: #fff;
-  border: 1px solid #ebeef5;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
 }
 
 .stat-card:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  border-color: #cf1322;
+  border-color: var(--hover-border);
 }
 
 .stat-card.single-col {
@@ -1223,18 +1222,18 @@ onUnmounted(() => {
 .divider-vertical {
     width: 1px;
     height: 40px;
-    background-color: #ebeef5;
+    background-color: var(--border-color);
     margin: 0 10px;
 }
 
 /* Background Colors */
 .mixed-bg {
-  background: linear-gradient(to right, #fff, #fdfdfd);
+  background: linear-gradient(to right, var(--card-bg), var(--bg-color));
 }
 
 .vol-bg {
-  background: linear-gradient(135deg, #fff1f0 0%, #ffffff 100%);
-  border: 1px solid #ffccc7;
+  background: linear-gradient(135deg, var(--hover-bg) 0%, var(--card-bg) 100%);
+  border: 1px solid var(--hover-border);
 }
 
 /* Content Styles */
@@ -1252,7 +1251,7 @@ onUnmounted(() => {
 
 .stat-label {
   font-size: 16px;
-  color: #606266;
+  color: var(--text-secondary);
   font-weight: bold;
   margin-right: 4px;
 }
@@ -1279,34 +1278,34 @@ onUnmounted(() => {
   line-height: 1.2;
 }
 
-.stat-value.red { color: #cf1322; }
-.stat-value.green { color: #52c41a; }
-.stat-value.blue { color: #1890ff; }
+.stat-value.red { color: var(--primary-red); }
+.stat-value.green { color: var(--primary-green); }
+.stat-value.blue { color: var(--primary-blue); }
 
 .stat-sub-val {
   font-size: 13px;
-  color: #909399;
+  color: var(--text-secondary);
   margin-top: 2px;
   white-space: nowrap;
 }
 
 .rank-number.rank-top-1 {
     color: #fff;
-    background-color: #cf1322;
+    background-color: var(--primary-red);
   }
   
   .rank-number.rank-top-2 {
     color: #fff;
-    background-color: #e6a23c;
+    background-color: var(--primary-gold);
   }
   
   .rank-number.rank-top-3 {
     color: #fff;
-    background-color: #faad14;
+    background-color: var(--primary-gold);
   }
   
   .rank-number.rank-top-10 {
-    color: #303133;
+    color: var(--text-primary);
     font-weight: 900;
     font-size: 16px;
   }
@@ -1314,10 +1313,10 @@ onUnmounted(() => {
 /* 9:20 and 9:15 Card Style */
 .mini-card {
   padding: 6px;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   margin-bottom: 6px; /* Match top-n-card margin-bottom */
-  background: #fff;
+  background: var(--card-bg);
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   transition: all 0.2s;
   font-size: 15px;
@@ -1332,8 +1331,8 @@ onUnmounted(() => {
 .mini-card.is-hovered {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  border-color: #e6a23c;
-  background-color: #fdf6ec;
+  border-color: var(--primary-gold);
+  background-color: var(--hover-bg);
 }
 .mini-row {
   display: flex;
@@ -1346,22 +1345,22 @@ onUnmounted(() => {
   height: 16px;
   line-height: 16px;
   text-align: center;
-  background-color: #f0f2f5;
-  color: #909399;
+  background-color: var(--bg-color);
+  color: var(--text-secondary);
   border-radius: 50%;
   font-size: 10px;
   margin-right: 6px;
 }
 .rank-badge.top-3 {
-  background-color: #333;
-  color: #fff;
+  background-color: var(--text-primary);
+  color: var(--card-bg);
 }
 .mini-name {
   font-weight: bold;
-  color: #333;
+  color: var(--text-primary);
 }
 .mini-row-amount {
-  color: #606266;
+  color: var(--text-secondary);
   padding-left: 24px;
   font-family: monospace;
 }
@@ -1376,7 +1375,7 @@ onUnmounted(() => {
 }
 
 .stock-info.amount {
-  color: #666;
+  color: var(--text-secondary);
   font-family: monospace;
 }
 
@@ -1395,16 +1394,16 @@ onUnmounted(() => {
 }
 
 .text-red {
-    color: #f56c6c;
+    color: var(--primary-red);
 }
 
 .text-green {
-    color: #67c23a;
+    color: var(--primary-green);
 }
 
 .no-data {
   text-align: center;
-  color: #999;
+  color: var(--text-secondary);
   padding: 20px;
 }
 </style>

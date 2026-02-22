@@ -13,6 +13,7 @@ export const store = reactive({
   autoRefresh: true,
   refreshInterval: 5000,
   tradingDays: new Set(),
+  theme: 'light', // Default theme: 'light', 'dark', 'eye-care'
   
   setTradingDays(days) {
     this.tradingDays = new Set(days)
@@ -28,8 +29,20 @@ export const store = reactive({
   
   setRefreshInterval(val) {
     this.refreshInterval = val
+  },
+
+  setTheme(val) {
+    this.theme = val
+    // Optionally save to localStorage here if persistence is needed across refreshes
+    localStorage.setItem('app-theme', val)
   }
 })
+
+// Initialize theme from localStorage if available
+const savedTheme = localStorage.getItem('app-theme')
+if (savedTheme && ['light', 'dark', 'eye-care'].includes(savedTheme)) {
+  store.theme = savedTheme
+}
 
 export const disabledDate = (time) => {
   // Always disable future dates

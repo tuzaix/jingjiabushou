@@ -1,5 +1,5 @@
 <template>
-  <div class="front-layout">
+  <div class="front-layout" :class="store.theme">
     <el-container>
       <el-header class="front-header">
         <div class="header-content">
@@ -51,6 +51,25 @@
                 <el-option label="60秒" :value="60000" />
                 </el-select>
             </div>
+
+            <div class="divider"></div>
+
+            <div class="control-group">
+                <el-dropdown trigger="click" @command="handleThemeCommand">
+                    <span class="theme-trigger">
+                        <el-icon><Brush /></el-icon>
+                        <span class="theme-text">{{ themeLabel }}</span>
+                        <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    </span>
+                    <template #dropdown>
+                    <el-dropdown-menu>
+                        <el-dropdown-item command="light">🌞 亮色模式</el-dropdown-item>
+                        <el-dropdown-item command="dark">🌙 暗色模式</el-dropdown-item>
+                        <el-dropdown-item command="eye-care">🌿 护眼模式</el-dropdown-item>
+                    </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+            </div>
           </div>
         </div>
       </el-header>
@@ -62,21 +81,96 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { Brush, ArrowDown } from '@element-plus/icons-vue'
 import { store, disabledDate } from '../store/dashboard.js'
+
+const themeLabel = computed(() => {
+    switch(store.theme) {
+        case 'light': return '亮色'
+        case 'dark': return '暗色'
+        case 'eye-care': return '护眼'
+        default: return '主题'
+    }
+})
+
+const handleThemeCommand = (command) => {
+    store.setTheme(command)
+}
 </script>
+
+<style>
+/* Global Variables Definition */
+:root {
+    --primary-red: #cf1322;
+    --primary-green: #52c41a;
+    --primary-blue: #1890ff;
+    --primary-gold: #faad14;
+}
+
+/* Light Theme (Default) */
+.front-layout.light {
+    --bg-color: #f0f2f5;
+    --header-bg: #1e1e1e;
+    --header-text: #fff;
+    --card-bg: #ffffff;
+    --text-primary: #303133;
+    --text-secondary: #606266;
+    --text-placeholder: #a0a0a0;
+    --border-color: #ebeef5;
+    --hover-bg: #fff1f0;
+    --hover-border: #cf1322;
+    --divider-color: #3a3a3a;
+    --control-label: #a0a0a0;
+}
+
+/* Dark Theme */
+.front-layout.dark {
+    --bg-color: #121212;
+    --header-bg: #1f1f1f;
+    --header-text: #e0e0e0;
+    --card-bg: #1e1e1e;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --text-placeholder: #606060;
+    --border-color: #333333;
+    --hover-bg: #2a2a2a;
+    --hover-border: #cf1322;
+    --divider-color: #505050;
+    --control-label: #808080;
+}
+
+/* Eye-care Theme */
+.front-layout.eye-care {
+    --bg-color: #C7EDCC; /* Classic eye-care green */
+    --header-bg: #3E5F4E; /* Darker green for header */
+    --header-text: #fff;
+    --card-bg: #E3F9E5; /* Lighter green for cards */
+    --text-primary: #2c3e50;
+    --text-secondary: #5d6d7e;
+    --text-placeholder: #808b96;
+    --border-color: #a8d5ba;
+    --hover-bg: #d4efdf;
+    --hover-border: #27ae60;
+    --divider-color: #a8d5ba;
+    --control-label: #e0f2f1;
+}
+</style>
 
 <style scoped>
 .front-layout {
   min-height: 100vh;
-  background-color: #f0f2f5;
+  background-color: var(--bg-color);
+  transition: background-color 0.3s ease;
 }
 .front-header {
-  background-color: #1e1e1e; /* Dark theme background */
+  background-color: var(--header-bg);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 100;
   height: 56px;
-  color: #fff;
-  border-bottom: 2px solid #cf1322; /* Red accent line */
+  color: var(--header-text);
+  border-bottom: 2px solid var(--primary-red);
+  transition: background-color 0.3s ease;
 }
 .header-content {
   max-width: 100%;
@@ -98,17 +192,17 @@ import { store, disabledDate } from '../store/dashboard.js'
 .logo-text-cn {
     font-size: 22px;
     font-weight: 800;
-    color: #cf1322; /* China Red */
+    color: var(--primary-red);
     letter-spacing: 1px;
 }
 .logo-text-title {
     font-size: 20px;
     font-weight: 700;
-    color: #fff;
+    color: var(--header-text);
     margin-left: 4px;
 }
 .logo-tag {
-    background: #cf1322;
+    background: var(--primary-red);
     color: #fff;
     font-size: 10px;
     padding: 1px 4px;
@@ -131,29 +225,46 @@ import { store, disabledDate } from '../store/dashboard.js'
 }
 .control-label {
     font-size: 13px;
-    color: #a0a0a0;
+    color: var(--control-label);
 }
 .divider {
     width: 1px;
     height: 18px;
-    background-color: #3a3a3a;
+    background-color: var(--divider-color);
     margin: 0 5px;
+}
+
+.theme-trigger {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: var(--header-text);
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+.theme-trigger:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.theme-text {
+    margin: 0 4px;
 }
 
 /* Override Element Plus Styles for Dark Header */
 :deep(.el-input__wrapper) {
-    background-color: #2b2b2b;
-    box-shadow: 0 0 0 1px #3a3a3a inset;
+    background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent for better blending */
+    box-shadow: 0 0 0 1px var(--divider-color) inset;
 }
 :deep(.el-input__wrapper:hover) {
-    box-shadow: 0 0 0 1px #cf1322 inset;
+    box-shadow: 0 0 0 1px var(--primary-red) inset;
 }
 :deep(.el-input__inner) {
-    color: #fff;
+    color: var(--header-text);
     font-weight: 500;
 }
 :deep(.el-date-editor .el-icon) {
-    color: #a0a0a0;
+    color: var(--control-label);
 }
 :deep(.el-switch__core) {
     border-color: #4a4a4a;
