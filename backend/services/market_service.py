@@ -41,7 +41,14 @@ class MarketService:
                 GROUP BY code
             ) t2 ON t1.code = t2.code AND t1.time = t2.max_time
             WHERE t1.date = %s
-            ORDER BY t1.asking_amount DESC LIMIT %s
+              AND NOT (
+                  -- Exclude Limit Down (Nuclear Button)
+                  (t1.name LIKE '%%ST%%' AND t1.bidding_percent <= -4.5) OR
+                  ((t1.code LIKE '30%%' OR t1.code LIKE '688%%') AND t1.bidding_percent <= -19.0) OR
+                  ((t1.code LIKE '8%%' OR t1.code LIKE '4%%' OR t1.code LIKE '9%%') AND t1.bidding_percent <= -29.0) OR
+                  (t1.name NOT LIKE '%%ST%%' AND t1.code NOT LIKE '30%%' AND t1.code NOT LIKE '688%%' AND t1.code NOT LIKE '8%%' AND t1.code NOT LIKE '4%%' AND t1.code NOT LIKE '9%%' AND t1.bidding_percent <= -9.0)
+              )
+            ORDER BY t1.non_asking_amount DESC LIMIT %s
             """
             
             top_n_data = DatabaseManager.execute_query(query_top_n, (date_str, date_str, limit), dictionary=True)

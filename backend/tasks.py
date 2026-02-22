@@ -47,6 +47,6 @@ if __name__ == "__main__":
     # fetch_call_auction_data()
     # fetch_yesterday_limit_up()
     #JiuyanService.sync_data('2026-02-13')
-    # run_update_call_auction_data(date_str='2026-02-22')
-    run_update_yesterday_limit_up(date_str='2026-02-13')
+    run_update_call_auction_data(date_str='2026-02-13')
+    # run_update_yesterday_limit_up(date_str='2026-02-13')
     pass

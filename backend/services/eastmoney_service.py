@@ -228,7 +228,9 @@ class EastmoneyService(BaseCurlService):
                 'bidding_percent': get_val(item, 'f615', 0),
                 'bidding_amount': bidding_amount,
                 'yidongleixing': get_val(item, 'f265', ''),
-                'asking_amount': asking_amount
+                'asking_amount': asking_amount,
+                'non_asking_amount': get_val(item, 'f618', 0),
+                'non_asking_volume': get_val(item, 'f619', 0),
             }
             processed_list.append(processed)
             
@@ -255,14 +257,15 @@ class EastmoneyService(BaseCurlService):
                 # Let's use 09:25:00 if outside the window, similar to fetch_eastmoney_call_auction logic
                 record_time = '09:25:00'
             
+            # Add non_asking_amount and non_asking_volume fields
             insert_query = """
             REPLACE INTO call_auction_data 
-            (date, time, code, name, sector, price, bidding_percent, bidding_amount, asking_amount, yidongleixing)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (date, time, code, name, sector, price, bidding_percent, bidding_amount, asking_amount, non_asking_amount, non_asking_volume, yidongleixing)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             
             # Sort by bidding_amount
-            data.sort(key=lambda x: float(x.get('bidding_amount', 0)), reverse=True)
+            data.sort(key=lambda x: float(x.get('non_asking_amount', 0)), reverse=True)
             
             db_data = []
             
@@ -284,8 +287,10 @@ class EastmoneyService(BaseCurlService):
                 bidding_percent = item.get('bidding_percent', 0)
                 yidongleixing = item.get('yidongleixing', '')
                 asking_amount = item.get('asking_amount', 0)
+                non_asking_amount = item.get('non_asking_amount', 0)
+                non_asking_volume = item.get('non_asking_volume', 0)
                 
-                db_data.append((current_date, record_time, code, name, sector, price, bidding_percent, bidding_amount, asking_amount, yidongleixing))
+                db_data.append((current_date, record_time, code, name, sector, price, bidding_percent, bidding_amount, asking_amount, non_asking_amount, non_asking_volume, yidongleixing))
 
             # Sort by asking_amount (index -2) and take top 200
             db_data.sort(key=lambda x: x[-2], reverse=True)
