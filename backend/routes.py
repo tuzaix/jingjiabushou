@@ -137,6 +137,17 @@ def jiuyan_sync():
     else:
         return jsonify({"error": result}), 500
 
+@api_bp.route('/api/admin/jiuyan/test', methods=['POST'])
+def jiuyan_test():
+    """
+    Test fetching data from Jiuyan using the configured cURL command.
+    """
+    success, result = JiuyanService.fetch_data()
+    if success:
+        return jsonify({"success": True, "data": result})
+    else:
+        return jsonify({"success": False, "error": result}), 500
+
 @api_bp.route('/api/admin/eastmoney/config', methods=['GET', 'POST'])
 def eastmoney_config():
     if request.method == 'GET':
