@@ -330,3 +330,108 @@ class JiuyanService:
         except Exception as e:
             logger.error(f"Error syncing Jiuyan data: {e}")
             return False, str(e)
+
+    @staticmethod
+    def test_config_fetch_data():
+        """
+        测试配置文件是否能正常抓取数据，主要用于后台管理页面的测试按钮
+        """
+        try:
+            config = JiuyanService.get_config()
+            if not config:
+                return False, "未找到配置信息，请先配置 cURL"
+
+            url = config['url']
+            method = config['method']
+            headers = config['headers']
+            body = config['body']
+            
+            # Prepare request arguments
+            kwargs = {
+                'headers': headers,
+                'timeout': 10
+            }
+            
+            if body:
+                if isinstance(body, dict) or isinstance(body, list):
+                    kwargs['json'] = body
+                else:
+                    kwargs['data'] = body
+
+            # Execute request
+            response = requests.request(method, url, **kwargs)
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    # Basic validation of response structure could go here
+                    return True, data
+                except json.JSONDecodeError:
+                    return False, f"响应不是有效的 JSON: {response.text[:100]}"
+            else:
+                return False, f"请求失败，状态码: {response.status_code}, 内容: {response.text[:100]}"
+
+        except Exception as e:
+            logger.error(f"Error fetching Eastmoney data: {e}")
+            return False, f"抓取异常: {str(e)}"
+
+    @staticmethod
+    def fetch_limit_up_data(secids):
+        """
+        Fetches raw call auction data from Eastmoney for the given secids.
+        """
+        try:
+            config = EastmoneyService.get_config()
+            if not config:
+                logger.error("No Eastmoney configuration found.")
+                return []
+
+            url = config.get('url')
+            if not url:
+                logger.error("Configuration URL is missing.")
+                return []
+
+            headers = config.get('headers', {})
+            payload = config.get('body', {})
+            
+            if not isinstance(payload, dict):
+                logger.error(f"Configuration body must be a JSON object, got {type(payload)}.")
+                return []
+
+            # Update payload
+            # Create a copy to avoid modifying the cached config if get_config returns a reference
+            payload = payload.copy()
+            payload['secids'] = secids
+            payload['pz'] = len(secids)
+            payload['pn'] = 1
+            
+            logger.info(f"Fetching data using configured URL: {url}")
+            logger.info(f"Payload overrides: pz={payload['pz']}, secids count={len(secids)}")
+
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
+            
+            if response.status_code == 200:
+                res_json = response.json()
+                if res_json and 'data' in res_json and res_json['data']:
+                    data_obj = res_json['data']
+                    data_list = data_obj.get('diff', data_obj.get('full', []))
+                    logger.info(f"Received {len(data_list) if data_list else 0} records from API.")
+                    return data_list
+                else:
+                    logger.warning(f"No data found in response. Keys: {res_json.keys() if res_json else 'None'}.")
+                    return []
+            else:
+                logger.error(f"Failed to fetch data: {response.status_code}")
+                return []
+                
+        except Exception as e:
+            logger.error(f"Error fetching call auction data: {e}")
+            return []
+
+    @staticmethod
+    def process_limit_up_data(raw_data_list):
+        pass
+
+    @staticmethod
+    def save_limit_up_data(data, date_str=None):
+        pass

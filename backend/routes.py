@@ -142,7 +142,7 @@ def jiuyan_test():
     """
     Test fetching data from Jiuyan using the configured cURL command.
     """
-    success, result = JiuyanService.fetch_data()
+    success, result = JiuyanService.test_config_fetch_data()
     if success:
         return jsonify({"success": True, "data": result})
     else:

@@ -1,10 +1,9 @@
 import json
 import requests
-import re
 import logging
 import shlex
 import datetime
-from urllib.parse import urlparse
+from utils.database import DatabaseManager
 
 # Use a specific logger for this service
 logger = logging.getLogger('eastmoney_service')
@@ -375,8 +374,6 @@ class EastmoneyService:
     @staticmethod
     def save_call_auction_data(data, date_str=None):
         try:
-            from utils.database import DatabaseManager
-
             if date_str:
                 current_date = date_str
             else:
