@@ -226,131 +226,6 @@ class JiuyanService:
 
     @staticmethod
     def fetch_data(date_str=None):
-        """
-        Fetch data from Jiuyan.
-        If date_str is provided, it attempts to inject it into the request body (if body is a dict).
-        If date_str is None (e.g. testing), it uses the body as configured.
-        """
-        config = JiuyanService.get_config()
-        print(config)
-        if not config:
-            return False, "未找到配置"
-            
-        body = config['body']
-        
-        if date_str:
-            # If date is provided (Scheduler mode), override it
-            if isinstance(body, dict):
-                body['date'] = date_str
-            else:
-                logger.warning("date_str provided but body is not a dict, cannot inject date.")
-        
-        # Remove Content-Length header as requests will recalculate it
-        if 'Content-Length' in config['headers']:
-            del config['headers']['Content-Length']
-            
-        # Also remove Host header as it might cause issues if IP changed
-        if 'Host' in config['headers']:
-             del config['headers']['Host']
-
-        try:
-            logger.info(f"Fetching Jiuyan data. URL: {config['url']}, Method: {config['method']}")
-            
-            response = requests.request(
-                method=config['method'],
-                url=config['url'],
-                headers=config['headers'],
-                json=body if isinstance(body, (dict, list)) else None,
-                data=body if not isinstance(body, (dict, list)) else None,
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                try:
-                    data = response.json()
-                    return True, data
-                except json.JSONDecodeError:
-                    return False, f"Invalid JSON response: {response.text[:200]}"
-            else:
-                return False, f"HTTP Error: {response.status_code} - {response.text[:200]}"
-                
-        except Exception as e:
-            logger.error(f"Error fetching Jiuyan data: {e}")
-            return False, str(e)
-    
-    @staticmethod
-    def sync_data(date_str=None):
-        """
-        Fetch and sync data to DB.
-        """
-        # Determine date if not provided (for sync logic, we need to know what date we are syncing)
-        target_date_str = date_str
-        if not target_date_str:
-            yesterday = datetime.date.today() - datetime.timedelta(days=1)
-            target_date_str = yesterday.strftime('%Y-%m-%d')
-            
-        # Call fetch_data with the determined date (so it gets injected)
-        success, result = JiuyanService.fetch_data(target_date_str)
-        
-        print(result)
-
-        if not success:
-            return False, result
-            
-        data_list = result.get('data', [])
-        if not data_list:
-             return True, "No data found"
-
-        try:
-            # Delete existing data for the date
-            DatabaseManager.execute_update(
-                "DELETE FROM yesterday_limit_up WHERE date = %s", 
-                (target_date_str,)
-            )
-            
-            # Insert new data
-            count = 0
-            query = """
-                INSERT INTO yesterday_limit_up 
-                (date, code, name, limit_up_type, consecutive_days, edition, consecutive_boards, days_boards, first_limit_up_time, expound)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """
-            
-            params = []
-            for item in data_list:
-                # Adjust field names based on actual API response structure
-                # This is a guess based on common structures, might need adjustment
-                print(item)
-                code = item.get('code')
-                name = item.get('name')
-                reason_type = item.get('reason_type', '') # e.g. 首板, 2连板
-                reason_info = item.get('reason_info', '') # e.g. 华为概念
-                limit_up_type = item.get('limit_up_type', '') # e.g. 自然涨停
-                consecutive_days = item.get('consecutive_days', 0)
-                edition = item.get('edition', '')
-                consecutive_boards = item.get('consecutive_boards', 0)
-                days_boards = item.get('days_boards', 0)
-                first_limit_up_time = item.get('first_limit_up_time', '')
-                expound = item.get('expound', '')
-                
-                if code:
-                    params.append((target_date_str, code, name, limit_up_type, consecutive_days, edition, consecutive_boards, days_boards, first_limit_up_time, expound))
-                    count += 1
-            
-            if params:
-                DatabaseManager.execute_batch(query, params)
-                
-            return True, f"Successfully synced {count} records for {target_date_str}"
-            
-        except Exception as e:
-            logger.error(f"Error syncing Jiuyan data: {e}")
-            return False, str(e)
-
-    @staticmethod
-    def test_config_fetch_data():
-        """
-        测试配置文件是否能正常抓取数据，主要用于后台管理页面的测试按钮
-        """
         try:
             config = JiuyanService.get_config()
             if not config:
@@ -359,6 +234,10 @@ class JiuyanService:
             url = config['url']
             method = config['method']
             headers = config['headers'].copy() if config['headers'] else {}
+            body = config['body']
+            
+            if date_str:
+                body['date'] = date_str
             
             # Clean header values: remove newlines/carriage returns that might have been preserved by shlex
             # and ensure they are single lines as required by HTTP/1.1
@@ -373,7 +252,7 @@ class JiuyanService:
             # Prepare request arguments
             kwargs = {
                 'headers': headers,
-                'timeout': 10
+                'timeout': 30
             }
             
             body = config['body']
@@ -403,64 +282,87 @@ class JiuyanService:
         except Exception as e:
             logger.error(f"Error fetching Jiuyan data: {e}")
             return False, f"抓取异常: {str(e)}"
+    
+    @staticmethod
+    def test_config_fetch_data():
+        """
+        测试配置文件是否能正常抓取数据，主要用于后台管理页面的测试按钮
+        """
+        return JiuyanService.fetch_data()
 
     @staticmethod
-    def fetch_limit_up_data(secids):
-        """
-        Fetches raw call auction data from Eastmoney for the given secids.
-        """
-        try:
-            config = EastmoneyService.get_config()
-            if not config:
-                logger.error("No Eastmoney configuration found.")
-                return []
-
-            url = config.get('url')
-            if not url:
-                logger.error("Configuration URL is missing.")
-                return []
-
-            headers = config.get('headers', {})
-            payload = config.get('body', {})
-            
-            if not isinstance(payload, dict):
-                logger.error(f"Configuration body must be a JSON object, got {type(payload)}.")
-                return []
-
-            # Update payload
-            # Create a copy to avoid modifying the cached config if get_config returns a reference
-            payload = payload.copy()
-            payload['secids'] = secids
-            payload['pz'] = len(secids)
-            payload['pn'] = 1
-            
-            logger.info(f"Fetching data using configured URL: {url}")
-            logger.info(f"Payload overrides: pz={payload['pz']}, secids count={len(secids)}")
-
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
-            
-            if response.status_code == 200:
-                res_json = response.json()
-                if res_json and 'data' in res_json and res_json['data']:
-                    data_obj = res_json['data']
-                    data_list = data_obj.get('diff', data_obj.get('full', []))
-                    logger.info(f"Received {len(data_list) if data_list else 0} records from API.")
-                    return data_list
-                else:
-                    logger.warning(f"No data found in response. Keys: {res_json.keys() if res_json else 'None'}.")
-                    return []
-            else:
-                logger.error(f"Failed to fetch data: {response.status_code}")
-                return []
-                
-        except Exception as e:
-            logger.error(f"Error fetching call auction data: {e}")
-            return []
+    def fetch_limit_up_data(date_str=None):
+        '''
+        获取指定日期的涨停数据
+        '''
+        return JiuyanService.fetch_data(date_str)
 
     @staticmethod
-    def process_limit_up_data(raw_data_list):
-        pass
+    def process_limit_up_data(data, date_str):
+        '''
+        处理返回的数据与数据库表字段对应关系
+        '''
+        processed_data = []
+        for row in data.get("data", []):
+            # 排除掉简图的部分
+            if not row.get("action_field_id"): 
+                continue
+            
+            # 板块概念
+            limit_up_type = row.get("name", "")
+
+            if limit_up_type.startswith("ST"): # 过滤掉ST股票
+                continue 
+            # 板块内的股票列表
+            stocks = row.get("list", [])
+            for stock in stocks:
+                # code只获取数字部分
+                tmp_code = stock.get("code", "")
+                code = re.sub(r'\D', '', tmp_code)
+
+                name = stock.get("name", "")
+                if not code or not name:
+                    continue
+                action_info = stock.get("article", {}).get("action_info", {})
+
+                try:
+                    consecutive_days = int(action_info.get("day", 0))
+                except:
+                    consecutive_days = 1
+                try:
+                    edition = int(action_info.get("edition", 0))
+                except:
+                    edition = 1
+                consecutive_boards = edition
+                days_boards = action_info.get("num", "")
+                if not days_boards:
+                    days_boards = "首板"
+                first_limit_up_time = action_info.get("time", "")
+                last_limit_up_time = first_limit_up_time
+                expound = action_info.get("expound", "")
+            
+                processed_data.append((
+                    date_str, code, name, limit_up_type, consecutive_days, edition, consecutive_boards, days_boards, first_limit_up_time, last_limit_up_time, expound
+                ))
+        import pprint
+        pprint.pprint(processed_data)
+        return processed_data
 
     @staticmethod
     def save_limit_up_data(data, date_str=None):
-        pass
+        '''
+        保存涨停数据到表中
+        '''
+        if not date_str:
+            return 
+        # 清理{date_str}的旧数据
+        DatabaseManager.execute_update("DELETE FROM yesterday_limit_up WHERE date = %s", (date_str,))
+        
+        # Insert with extended fields
+        insert_query = """
+            INSERT INTO yesterday_limit_up 
+            (date, code, name, limit_up_type, consecutive_days, edition, consecutive_boards, days_boards, first_limit_up_time, last_limit_up_time, expound) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        count = DatabaseManager.execute_update(insert_query, data, many=True)
+        logger.info(f"Saved {count} yesterday limit up stocks from Jiuyan for date {date_str}.")

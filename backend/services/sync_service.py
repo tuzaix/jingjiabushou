@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class SyncService:
     @staticmethod
-    def get_all_stock_codes():
+    def update_all_stock_codes():
         try:
             stock_zh_a_spot_em_df = ak.stock_zh_a_spot_em()
             
@@ -43,89 +43,6 @@ class SyncService:
         except Exception as e:
             logger.error(f"Error fetching stock list: {e}")
             return []
-
-    @staticmethod
-    def update_stock_list_from_secids(secids):
-        """
-        Updates stock_list table based on the provided secids list.
-        secids format: ["1.600000", "0.000001"] or "1.600000,0.000001"
-        """
-        try:
-            if not secids:
-                return 0
-                
-            if isinstance(secids, str):
-                secids = secids.split(',')
-                
-            target_codes = set()
-            for secid in secids:
-                # Format is market.code
-                parts = secid.split('.')
-                if len(parts) == 2:
-                    target_codes.add(parts[1])
-            
-            if not target_codes:
-                logger.warning("No valid codes found in secids.")
-                return 0
-            
-            logger.info(f"Updating stock_list with {len(target_codes)} codes from secids...")
-            
-            # Fetch all stock info to get names
-            stock_zh_a_spot_em_df = ak.stock_zh_a_spot_em()
-            
-            # Filter by target codes first
-            df_subset = stock_zh_a_spot_em_df[stock_zh_a_spot_em_df['代码'].isin(target_codes)]
-            
-            # Apply exclusion filters (ST, Delisted, New Third Board/Beijing)
-            mask_valid_name = ~df_subset['名称'].str.contains('ST|退')
-            mask_valid_code = df_subset['代码'].str.match('^(00|30|60|68)')
-            
-            filtered_df = df_subset[mask_valid_name & mask_valid_code]
-            
-            # Log dropped count
-            dropped_count = len(df_subset) - len(filtered_df)
-            if dropped_count > 0:
-                logger.info(f"Filtered out {dropped_count} stocks (ST/Delisted/New Third Board).")
-            
-            # Prepare data
-            codes = filtered_df['代码'].tolist()
-            names = filtered_df['名称'].tolist()
-            
-            # Handle codes that might not be in the fetched list (e.g. indices or new stocks)
-            # Note: If they were filtered out by name/code logic above, we shouldn't add them back as 'Unknown'
-            # We only add back 'Unknown' if they were VALID codes but just not found in akshare data (rare)
-            
-            found_codes = set(codes)
-            # Only consider missing codes that WOULD have been valid
-            potential_missing = target_codes - set(df_subset['代码'].tolist()) # Codes not in akshare at all
-            
-            valid_missing_codes = []
-            for code in potential_missing:
-                # Check if it looks like a valid code
-                if code.startswith(('00', '30', '60', '68')):
-                    valid_missing_codes.append(code)
-            
-            if valid_missing_codes:
-                logger.warning(f"Could not find names for {len(valid_missing_codes)} valid codes: {valid_missing_codes[:10]}...")
-                for code in valid_missing_codes:
-                    codes.append(code)
-                    names.append('Unknown') # Placeholder name
-
-            DatabaseManager.execute_update("TRUNCATE TABLE stock_list")
-            
-            insert_query = "INSERT INTO stock_list (code, name, market) VALUES (%s, %s, %s)"
-            data = []
-            for code, name in zip(codes, names):
-                market = 1 if code.startswith('6') else 0 
-                data.append((code, name, market))
-                
-            count = DatabaseManager.execute_update(insert_query, data, many=True)
-            logger.info(f"Successfully updated stock list with {count} stocks.")
-            return count
-            
-        except Exception as e:
-            logger.error(f"Error updating stock list from secids: {e}")
-            return 0
 
     @staticmethod
     def sync_call_auction_data(stock_list_data=None, date_str=None):
@@ -174,90 +91,29 @@ class SyncService:
             logger.warning("No data fetched from EastmoneyService.")
 
     @staticmethod
-    def fetch_yesterday_limit_up(date_str=None):
+    def sync_yesterday_limit_up(date_str=None):
+        '''
+        同步昨天的涨停数据到数据库
+        '''
         try:
             if not date_str:
                 date_str = datetime.date.today().strftime('%Y-%m-%d')
             
-            logger.info(f"Starting fetch_yesterday_limit_up for {date_str} using JiuyanService...")
-            success, msg = JiuyanService.sync_data(date_str)
+            logger.info(f"Starting sync_yesterday_limit_up for {date_str} using JiuyanService...")
+            success, jiuyan_data = JiuyanService.fetch_limit_up_data(date_str)
+
+            # 获取数据状态验证
+            if not success:
+                logger.error(f"Failed to fetch limit up data for {date_str} from JiuyanService")
+                return
             
-            data_source = "jiuyan"
+            # Process data
+            processed_data = JiuyanService.process_limit_up_data(jiuyan_data, date_str)
             
-            jiuyan_data = []
-            if success:
-                jiuyan_data = DatabaseManager.execute_query(
-                    "SELECT * FROM yesterday_limit_up WHERE date = %s", 
-                    (date_str,), 
-                    dictionary=True
-                )
+            # Save processed data
+            JiuyanService.save_limit_up_data(processed_data, date_str)
             
-            if not success or not jiuyan_data:
-                logger.warning(f"Jiuyan sync failed or no data ({msg}), falling back to AkShare.")
-                data_source = "akshare"
-            
-            if data_source == "jiuyan":
-                # Process Jiuyan Data
-                DatabaseManager.execute_update("DELETE FROM yesterday_limit_up WHERE date = %s", (date_str,))
-                
-                # Insert with extended fields
-                insert_query = """
-                    INSERT INTO yesterday_limit_up 
-                    (date, code, name, limit_up_type, consecutive_days, consecutive_boards, first_limit_up_time) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """
-                
-                data_to_insert = []
-                for row in jiuyan_data:
-                    code = row['code']
-                    name = row['name']
-                    reason_info = row['reason_info'] # e.g. "华为概念"
-                    plate_name = row['plate_name']
-                    
-                    # Parse consecutive days
-                    consecutive = 1
-                    if reason_type == '首板':
-                        consecutive = 1
-                    elif reason_type and '连板' in reason_type:
-                        try:
-                            match = re.search(r'(\d+)', reason_type)
-                            if match:
-                                consecutive = int(match.group(1))
-                        except:
-                            pass
-                    
-                    # Construct limit_up_type (reason)
-                    limit_up_type_val = reason_info if reason_info else ''
-                    if plate_name and plate_name not in limit_up_type_val:
-                         limit_up_type_val = f"{plate_name} {limit_up_type_val}".strip()
-                    
-                    # Jiuyan doesn't provide time, set to None
-                    first_limit_up_time = None
-                    
-                    data_to_insert.append((
-                        date_str, code, name, limit_up_type_val, consecutive, consecutive, first_limit_up_time
-                    ))
-                
-                count = DatabaseManager.execute_update(insert_query, data_to_insert, many=True)
-                logger.info(f"Saved {count} yesterday limit up stocks from Jiuyan for date {date_str}.")
-                
-            else:
-                # AkShare Fallback
-                date_param = date_str.replace('-', '')
-                df = ak.stock_zt_pool_previous_em(date=date_param)
-                
-                DatabaseManager.execute_update("DELETE FROM yesterday_limit_up WHERE date = %s", (date_str,))
-                
-                insert_query = "INSERT INTO yesterday_limit_up (date, code, name, limit_up_type) VALUES (%s, %s, %s, %s)"
-                data = []
-                for _, row in df.iterrows():
-                    code = row['代码']
-                    name = row['名称']
-                    reason = row['涨停原因类别'] if '涨停原因类别' in row else ''
-                    data.append((date_str, code, name, reason))
-                
-                count = DatabaseManager.execute_update(insert_query, data, many=True)
-                logger.info(f"Saved {count} yesterday limit up stocks (AkShare) for date {date_str}.")
+            logger.info(f"Successfully synced yesterday limit up data for {date_str}")
             
         except Exception as e:
             logger.error(f"Error fetching yesterday limit up: {e}")

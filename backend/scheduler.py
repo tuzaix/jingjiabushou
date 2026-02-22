@@ -46,7 +46,7 @@ def job_update_stock_list():
     
     tasks.run_update_stock_list()
 
-def job_fetch_jiuyan():
+def job_fetch_limit_up():
     '''
     每天定时获取韭研按照题材概念分类的涨停数据
     '''
@@ -54,7 +54,7 @@ def job_fetch_jiuyan():
     trading_day = get_current_or_previous_trading_day()
     logger.info(f"Executing job_fetch_jiuyan for date: {trading_day}")
     
-    tasks.run_update_jiuyan_data(date_str=trading_day)
+    tasks.run_update_yesterday_limit_up(date_str=trading_day)
 
 def start_scheduler(blocking=False):
     if blocking:
@@ -70,7 +70,7 @@ def start_scheduler(blocking=False):
     
     # Schedule Jiuyan fetch daily at 18:00
     # 每天定时获取韭研按照题材概念分类的涨停数据
-    scheduler.add_job(job_fetch_jiuyan, 'cron', day_of_week='mon-fri', hour=18, minute=0)
+    scheduler.add_job(job_fetch_limit_up, 'cron', day_of_week='mon-fri', hour=18, minute=0)
     
     try:
         scheduler.start()

@@ -158,9 +158,7 @@ class EastmoneyService:
                 
                 if secids:
                     logger.info("Found secids in configuration, updating stock_list...")
-                    # Local import to avoid circular dependency
-                    from .sync_service import SyncService
-                    SyncService.update_stock_list_from_secids(secids)
+                    EastmoneyService.update_stock_list_from_secids(secids)
                     
             except Exception as e:
                 logger.error(f"Error auto-updating stock_list from secids: {e}")
@@ -170,6 +168,90 @@ class EastmoneyService:
         except Exception as e:
             logger.error(f"Error updating Eastmoney config: {e}")
             return False, f"配置更新失败: {str(e)}"
+
+    @staticmethod
+    def update_stock_list_from_secids(secids):
+        """
+        Updates stock_list table based on the provided secids list.
+        secids format: ["1.600000", "0.000001"] or "1.600000,0.000001"
+        """
+        try:
+            if not secids:
+                return 0
+                
+            if isinstance(secids, str):
+                secids = secids.split(',')
+                
+            target_codes = set()
+            for secid in secids:
+                # Format is market.code
+                parts = secid.split('.')
+                if len(parts) == 2:
+                    target_codes.add(parts[1])
+            
+            if not target_codes:
+                logger.warning("No valid codes found in secids.")
+                return 0
+            
+            logger.info(f"Updating stock_list with {len(target_codes)} codes from secids...")
+            
+            # Fetch all stock info to get names
+            stock_zh_a_spot_em_df = ak.stock_zh_a_spot_em()
+            
+            # Filter by target codes first
+            df_subset = stock_zh_a_spot_em_df[stock_zh_a_spot_em_df['代码'].isin(target_codes)]
+            
+            # Apply exclusion filters (ST, Delisted, New Third Board/Beijing)
+            mask_valid_name = ~df_subset['名称'].str.contains('ST|退')
+            mask_valid_code = df_subset['代码'].str.match('^(00|30|60|68)')
+            
+            filtered_df = df_subset[mask_valid_name & mask_valid_code]
+            
+            # Log dropped count
+            dropped_count = len(df_subset) - len(filtered_df)
+            if dropped_count > 0:
+                logger.info(f"Filtered out {dropped_count} stocks (ST/Delisted/New Third Board).")
+            
+            # Prepare data
+            codes = filtered_df['代码'].tolist()
+            names = filtered_df['名称'].tolist()
+            
+            # Handle codes that might not be in the fetched list (e.g. indices or new stocks)
+            # Note: If they were filtered out by name/code logic above, we shouldn't add them back as 'Unknown'
+            # We only add back 'Unknown' if they were VALID codes but just not found in akshare data (rare)
+            
+            found_codes = set(codes)
+            # Only consider missing codes that WOULD have been valid
+            potential_missing = target_codes - set(df_subset['代码'].tolist()) # Codes not in akshare at all
+            
+            valid_missing_codes = []
+            for code in potential_missing:
+                # Check if it looks like a valid code
+                if code.startswith(('00', '30', '60', '68')):
+                    valid_missing_codes.append(code)
+            
+            if valid_missing_codes:
+                logger.warning(f"Could not find names for {len(valid_missing_codes)} valid codes: {valid_missing_codes[:10]}...")
+                for code in valid_missing_codes:
+                    codes.append(code)
+                    names.append('Unknown') # Placeholder name
+
+            DatabaseManager.execute_update("TRUNCATE TABLE stock_list")
+            
+            insert_query = "INSERT INTO stock_list (code, name, market) VALUES (%s, %s, %s)"
+            data = []
+            for code, name in zip(codes, names):
+                market = 1 if code.startswith('6') else 0 
+                data.append((code, name, market))
+                
+            count = DatabaseManager.execute_update(insert_query, data, many=True)
+            logger.info(f"Successfully updated stock list with {count} stocks.")
+            return count
+            
+        except Exception as e:
+            logger.error(f"Error updating stock list from secids: {e}")
+            return 0
+
 
     @staticmethod
     def generate_curl_command(config):
