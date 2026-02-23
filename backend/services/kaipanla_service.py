@@ -102,7 +102,7 @@ class KaipanlaService(BaseCurlService):
         return BaseCurlService._fetch_data_base('kaipanla_index')
 
     @staticmethod
-    def save_index_data():
+    def save_index_data(date_str=None):
         """
         Fetches index data and saves it to the database.
         """
@@ -123,24 +123,8 @@ class KaipanlaService(BaseCurlService):
                     logger.warning(f"Could not parse response as JSON: {result[:100]}...")
                     return False, "Invalid JSON response"
 
-            data_list = []
+            data_list = parsed.get('StockList', [])
             
-            # 1. Check for nested structure: data -> StockList (from user example)
-            if isinstance(parsed, dict) and 'data' in parsed and isinstance(parsed['data'], dict) and 'StockList' in parsed['data']:
-                data_list = parsed['data']['StockList']
-            # 2. Check for simple list wrapper: data -> list
-            elif isinstance(parsed, dict) and 'data' in parsed and isinstance(parsed['data'], list):
-                data_list = parsed['data']
-            # 3. Check for direct list
-            elif isinstance(parsed, list):
-                data_list = parsed
-            # 4. Check for 'list' key
-            elif isinstance(parsed, dict) and 'list' in parsed and isinstance(parsed['list'], list):
-                data_list = parsed['list']
-            # 5. Fallback: treat whole object as item if dict
-            elif isinstance(parsed, dict):
-                data_list = [parsed]
-
             if not data_list:
                 logger.warning("No index data found in response.")
                 return False, "No data found"
@@ -149,51 +133,30 @@ class KaipanlaService(BaseCurlService):
             date_str = current_time.strftime('%Y-%m-%d')
             time_str = current_time.strftime('%H:%M:%S')
 
+                # {
+                #     "Icon": 0,
+                #     "Level": 0,
+                #     "StockID": "SH000001",
+                #     "gang": "",
+                #     "increase_amount": -51.95,
+                #     "increase_rate": "-1.26%",
+                #     "last_px": 4082.07,
+                #     "prod_name": "上证指数",
+                #     "state": "86",
+                #     "turnover": "846808337462"
+                # },
+
             values_to_insert = []
             for item in data_list:
-                # Flexible key extraction
-                # Priority: User provided keys (StockID, prod_name) -> Standard keys
-                code = item.get('StockID') or item.get('IndexCode') or item.get('code') or item.get('Code') or item.get('symbol') or item.get('Symbol')
-                name = item.get('prod_name') or item.get('IndexName') or item.get('name') or item.get('Name')
-                
-                if not code or not name:
-                    # Skip items without code/name
-                    continue
-                
-                # Price: last_px, CurrentPrice, price
-                price = item.get('last_px') or item.get('CurrentPrice') or item.get('price') or item.get('current') or 0
-                
-                # Rate: increase_rate, ChangeRate, rate (handle %)
-                rate_raw = item.get('increase_rate') or item.get('ChangeRate') or item.get('rate') or item.get('zf') or 0
-                if isinstance(rate_raw, str) and '%' in rate_raw:
-                    try:
-                        rate = float(rate_raw.replace('%', ''))
-                    except:
-                        rate = 0
-                else:
-                    try:
-                        rate = float(rate_raw)
-                    except:
-                        rate = 0
-                
-                # Volume: Volume, volume, vol
-                # Note: In user example, 'turnover' is likely amount, not volume (shares). 
-                # If volume is not provided, default to 0.
-                vol = item.get('Volume') or item.get('volume') or item.get('vol') or 0
-                
-                # Amount: turnover, Amount, amount
-                amt_raw = item.get('turnover') or item.get('Amount') or item.get('amount') or item.get('amt') or 0
-                try:
-                    amt = float(amt_raw)
-                except:
-                    amt = 0
-                
-                # Raw JSON for debugging/future use
-                raw_json = json.dumps(item, ensure_ascii=False)
-                
+                index_code = item.get('StockID')   
+                index_name = item.get('prod_name')
+                increase_amount = item.get('increase_amount')
+                increase_rate = item.get('increase_rate').strip('%')
+                index_volume = item.get('last_px')
+               
                 values_to_insert.append((
-                    date_str, time_str, str(code), str(name), 
-                    price, rate, vol, amt, raw_json
+                    date_str, time_str, str(index_code), str(index_name), 
+                    increase_amount, increase_rate, index_volume
                 ))
 
             if not values_to_insert:
@@ -202,8 +165,8 @@ class KaipanlaService(BaseCurlService):
 
             insert_sql = """
             INSERT INTO index_data 
-            (date, time, index_code, index_name, current_price, change_rate, volume, amount, raw_json)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (date, time, index_code, index_name, increase_amount, increase_rate, index_volume)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
             
             count = DatabaseManager.execute_update(insert_sql, values_to_insert, many=True)
