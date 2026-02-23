@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 import logging
-from routes import api_bp
+from api import frontend_bp, admin_bp
 # from scheduler import init_scheduler  <-- Removed
 
 # Configure logging
@@ -13,7 +13,8 @@ def create_app():
     CORS(app) # Enable CORS for all routes
     
     # Register Blueprints
-    app.register_blueprint(api_bp)
+    app.register_blueprint(frontend_bp)
+    app.register_blueprint(admin_bp)
     
     # Init Scheduler
     # Scheduler is now a separate service. Run scheduler.py independently.
