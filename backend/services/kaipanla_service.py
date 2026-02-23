@@ -98,10 +98,7 @@ class KaipanlaService(BaseCurlService):
                 except json.JSONDecodeError:
                     logger.warning(f"Could not parse response as JSON: {result[:100]}...")
                     return False, "Invalid JSON response"
-            
-            from pprint import pprint 
-            pprint(parsed)
-
+        
             data_list = parsed.get('StockList', [])
             
             if not data_list:
