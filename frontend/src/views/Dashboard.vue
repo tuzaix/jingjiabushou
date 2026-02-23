@@ -260,7 +260,7 @@
 
           <div style="flex: 1; display: flex; gap: 4px; min-height: 0;">
             <!-- 3.2 One Word Board -->
-            <el-card class="box-card" :body-style="{ padding: '0px' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
             <template #header>
               <div class="card-header">
                 <span>一字板</span>
@@ -281,7 +281,7 @@
           </el-card>
 
           <!-- 3.3 Abnormal Movement -->
-          <el-card class="box-card" :body-style="{ padding: '0px' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+          <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
             <template #header>
               <div class="card-header">
                 <span>异动</span>
@@ -302,7 +302,7 @@
           </el-card>
 
           <!-- 3.4 Nuclear Button (Limit Down) -->
-          <el-card class="box-card" :body-style="{ padding: '0px' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+          <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
             <template #header>
               <div class="card-header">
                 <span>核按钮</span>
@@ -1020,26 +1020,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   border: 1px solid var(--border-color);
 }
-/* Hide scrollbar for Webkit browsers (Chrome, Safari) */
-.main-list::-webkit-scrollbar,
-.sub-list::-webkit-scrollbar,
-.yesterday-limit-up-container::-webkit-scrollbar,
-.card-list-container::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  background: transparent !important;
-}
 
-/* Hide scrollbar for IE, Edge and Firefox */
-.main-list,
-.sub-list,
-.yesterday-limit-up-container,
-.card-list-container {
-  -ms-overflow-style: none !important;  /* IE and Edge */
-  scrollbar-width: none !important;  /* Firefox */
-  overflow-y: scroll; /* Ensure scrollability while hiding bars */
-}
 
 .actions-bar {
   margin-bottom: 20px;
@@ -1637,5 +1618,32 @@ onUnmounted(() => {
 
 .no-scrollbar-table .el-table__body-wrapper .el-table__body {
    width: 100% !important;
+}
+</style>
+
+<style>
+/* Global scrollbar hiding for specific dashboard components */
+/* Using non-scoped style to ensure ::-webkit-scrollbar works correctly */
+
+/* Hide scrollbar for Webkit browsers (Chrome, Safari) */
+.main-list::-webkit-scrollbar,
+.sub-list::-webkit-scrollbar,
+.yesterday-limit-up-container::-webkit-scrollbar,
+.card-list-container::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+  -webkit-appearance: none !important;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.main-list,
+.sub-list,
+.yesterday-limit-up-container,
+.card-list-container {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+  overflow-y: scroll; /* Ensure scrollability while hiding bars */
 }
 </style>
