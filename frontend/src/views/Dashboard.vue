@@ -1187,9 +1187,10 @@ onUnmounted(() => {
 .stock-card {
   width: auto;
   min-width: 100px;
+  height: 60px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  padding: 12px 16px;
+  padding: 0 16px;
   margin: 0;
   display: flex;
   flex-direction: row;
@@ -1200,6 +1201,7 @@ onUnmounted(() => {
   transition: all 0.2s;
   flex-grow: 0;
   position: relative;
+  box-sizing: border-box;
 }
 
 .stock-card .stock-name {
