@@ -1020,18 +1020,25 @@ onUnmounted(() => {
   flex-shrink: 0;
   border: 1px solid var(--border-color);
 }
+/* Hide scrollbar for Webkit browsers (Chrome, Safari) */
 .main-list::-webkit-scrollbar,
 .sub-list::-webkit-scrollbar,
-.yesterday-limit-up-container::-webkit-scrollbar {
-  display: none;
+.yesterday-limit-up-container::-webkit-scrollbar,
+.card-list-container::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .main-list,
 .sub-list,
-.yesterday-limit-up-container {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+.yesterday-limit-up-container,
+.card-list-container {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+  overflow-y: scroll; /* Ensure scrollability while hiding bars */
 }
 
 .actions-bar {
@@ -1347,12 +1354,6 @@ onUnmounted(() => {
   overflow-y: auto;
   padding: 8px;
   min-height: 0;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-}
-
-.card-list-container::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
 }
 
 .list-card {
