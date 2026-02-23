@@ -1347,6 +1347,12 @@ onUnmounted(() => {
   overflow-y: auto;
   padding: 8px;
   min-height: 0;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+.card-list-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .list-card {
@@ -1407,19 +1413,7 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-/* Scrollbar for card list */
-.card-list-container::-webkit-scrollbar {
-  width: 4px;
-}
 
-.card-list-container::-webkit-scrollbar-thumb {
-  background-color: var(--border-color);
-  border-radius: 2px;
-}
-
-.card-list-container::-webkit-scrollbar-track {
-  background-color: transparent;
-}
 
 
 /* Table Theme Adaptation */
