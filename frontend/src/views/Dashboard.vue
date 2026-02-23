@@ -1,14 +1,15 @@
 <template>
   <div class="dashboard-container">
-    <el-row :gutter="8">
-      <el-col :span="8">
-          <el-card class="box-card">
+    <el-row :gutter="4">
+      <!-- 1. Ranking Monitor (Left) -->
+      <el-col :span="7">
+          <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }" style="height: calc(100vh - 70px); display: flex; flex-direction: column;">
           <template #header>
             <div class="card-header">
               <span>竞价排名监控 (9:15 / 9:20 / 9:25)</span>
             </div>
           </template>
-          <div class="monitor-container" style="display: flex; height: calc(100vh - 180px);">
+          <div class="monitor-container" style="display: flex; flex: 1; overflow: hidden;">
              <!-- Rank Column -->
              <div style="flex: 0 0 50px; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); height: 100%;">
                 <div class="list-header-title" style="color: var(--text-secondary);">序号</div>
@@ -99,51 +100,53 @@
         </el-card>
       </el-col>
 
-      <el-col :span="6">
-        <el-card class="box-card" :body-style="{ padding: '0px' }">
-          <template #header>
-            <div class="card-header">
-              <span>昨日涨停表现 (9:25)</span>
+      <!-- 2. Yesterday Limit Up (Middle) -->
+      <el-col :span="7">
+          <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }" style="height: calc(100vh - 70px); display: flex; flex-direction: column;">
+            <template #header>
+              <div class="card-header">
+                <span>昨日涨停表现 (9:25)</span>
+              </div>
+            </template>
+            <div class="yesterday-limit-up-container" style="flex: 1; overflow-y: auto;">
+               <div v-for="group in groupedYesterdayLimitUp" :key="group.key" class="limit-up-group">
+                 <div class="group-label">
+                    {{ group.label }}
+                    <el-tag v-if="group.rate >= 50" type="danger" effect="dark" size="small" style="margin-left: 10px;">强</el-tag>
+                    <el-tag v-else-if="group.rate < 20" type="info" effect="dark" size="small" style="margin-left: 10px;">弱</el-tag>
+                 </div>
+                 <div class="group-items">
+                    <div v-for="item in group.items" :key="item.code" 
+                         class="stock-card"
+                         :class="{ 'is-hovered': hoveredCode === item.code }"
+                         @mouseenter="handleMouseEnter(item.code)" 
+                         @mouseleave="handleMouseLeave">
+                         
+                       <div v-if="item.is_20cm" class="limit-up-20cm-badge">20cm</div>
+                       <div v-if="item.edition && item.edition > 1 && item.edition !== item.consecutive_boards" class="edition-badge">{{ item.edition }}天{{ item.consecutive_boards }}板</div>
+                       
+                       <div style="display: flex; flex-direction: column; width: 100%;">
+                           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                               <span class="stock-name">{{ item.name }}</span>
+                               <span class="stock-info" :class="getChangeClass(item.change_percent)">{{ formatChange(item.change_percent) }}</span>
+                           </div>
+                           <div style="display: flex; justify-content: space-between; align-items: center;">
+                               <span class="stock-info amount">{{ formatAmount(item.amount) }}</span>
+                               <span v-if="item.open_percent" class="stock-info" :class="getChangeClass(item.open_percent)">开:{{ formatChange(item.open_percent) }}</span>
+                           </div>
+                       </div>
+                    </div>
+                 </div>
+               </div>
+               <div v-if="groupedYesterdayLimitUp.length === 0" class="no-data">暂无数据</div>
             </div>
-          </template>
-          <!-- Custom Layout for Yesterday Limit Up Performance -->
-          <div class="yesterday-limit-up-container" style="height: calc(100vh - 180px); overflow-y: auto; padding: 20px;">
-             <div v-for="group in groupedYesterdayLimitUp" :key="group.key" class="limit-up-group">
-                <div class="group-label" :style="group.rate >= 50 ? { color: 'var(--primary-red)' } : {}">{{ group.label }}</div>
-                <div class="group-items">
-                   <div v-for="item in group.items" :key="item.code" class="stock-card"
-                        :class="{ 'is-hovered': hoveredCode === item.code }"
-                        @mouseenter="handleMouseEnter(item.code)" 
-                        @mouseleave="handleMouseLeave">
-                     <div v-if="item.code.startsWith('30') || item.code.startsWith('688')" class="limit-up-20cm-badge">20cm</div>
-                     <div v-if="item.edition && item.edition !== 0 && (item.consecutive_days > item.edition)" class="edition-badge">
-                        {{ item.consecutive_days }}天{{ item.edition }}板
-                     </div>
-                 <div class="stock-name">{{ item.name }}</div>
-                      <div class="stock-info">
-                        <span :class="getChangeClass(item.change_percent)">{{ formatChange(item.change_percent) }}</span>
-                      </div>
-                      <div class="stock-info amount" title="成交额 / 涨停委买额">
-                        <span>{{ formatAmount(item.bidding_amount) }}</span>
-                        <span style="color: var(--text-secondary); margin: 0 4px;">/</span>
-                        <span style="color: var(--primary-gold);">{{ formatAmount(item.asking_amount) }}</span>
-                      </div>
-                      <div style="display: flex; margin-left: 10px;">
-                        <span v-for="sec in getSortedLimitUpSectors(item.sector).slice(0, 2)" :key="sec" class="stock-tag" :style="getLimitUpHeatStyle(sec)">{{ sec }}</span>
-                      </div>
-                   </div>
-                </div>
-             </div>
-             <div v-if="groupedYesterdayLimitUp.length === 0" class="no-data">
-                暂无数据
-             </div>
-          </div>
-        </el-card>
+          </el-card>
       </el-col>
-      
+
+      <!-- 3. Right Side (Sentiment + Tables) -->
       <el-col :span="10">
-        <div style="height: calc(100vh - 120px); display: flex; flex-direction: column; gap: 20px;">
-          <!-- 1. Market Sentiment -->
+        <div style="height: calc(100vh - 70px); display: flex; flex-direction: column; gap: 4px;">
+          <!-- 3.1 Market Sentiment -->
           <el-card class="box-card" :body-style="{ padding: '15px' }" style="flex: 0 0 auto;">
             <template #header>
               <div class="card-header">
@@ -243,25 +246,68 @@
             <div v-else class="no-data">暂无数据</div>
           </el-card>
 
-          <!-- 2. One Word Board -->
+          <!-- 3.2 One Word Board -->
           <el-card class="box-card" :body-style="{ padding: '0px' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
             <template #header>
               <div class="card-header">
-                <span>一字板 (9:25 涨幅10%)</span>
+                <span>一字板</span>
               </div>
             </template>
             <el-table :data="limitUp925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
-                <el-table-column prop="code" label="代码" width="80" />
-                <el-table-column prop="name" label="名称" width="80" />
-                <el-table-column prop="price" label="价格" width="70" />
-                <el-table-column prop="change_percent" label="涨幅%" width="70">
+                <el-table-column prop="code" label="代码" width="70" />
+                <el-table-column prop="name" label="名称" width="70" />
+                <el-table-column prop="change_percent" label="涨幅" width="60">
                     <template #default="scope">
-                    <span :style="{ color: 'red' }">
-                        {{ scope.row.change_percent }}%
-                    </span>
+                    <span class="text-red">{{ scope.row.change_percent }}%</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="amount" label="封单额" width="100">
+                <el-table-column prop="amount" label="封单" min-width="80">
+                <template #default="scope">
+                    {{ formatAmount(scope.row.amount) }}
+                </template>
+                </el-table-column>
+            </el-table>
+          </el-card>
+
+          <!-- 3.3 Abnormal Movement -->
+          <el-card class="box-card" :body-style="{ padding: '0px' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <template #header>
+              <div class="card-header">
+                <span>异动</span>
+              </div>
+            </template>
+            <el-table :data="abnormalMovement925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
+                <el-table-column prop="code" label="代码" width="70" />
+                <el-table-column prop="name" label="名称" width="70" />
+                <el-table-column prop="change_percent" label="涨幅" width="60">
+                    <template #default="scope">
+                    <span :class="getChangeClass(scope.row.change_percent)">{{ scope.row.change_percent }}%</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="amount" label="成交" min-width="80">
+                <template #default="scope">
+                    {{ formatAmount(scope.row.amount) }}
+                </template>
+                </el-table-column>
+            </el-table>
+          </el-card>
+
+          <!-- 3.4 Nuclear Button (Limit Down) -->
+          <el-card class="box-card" :body-style="{ padding: '0px' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <template #header>
+              <div class="card-header">
+                <span>核按钮</span>
+              </div>
+            </template>
+            <el-table :data="limitDown925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
+                <el-table-column prop="code" label="代码" width="70" />
+                <el-table-column prop="name" label="名称" width="70" />
+                <el-table-column prop="change_percent" label="跌幅" width="60">
+                    <template #default="scope">
+                    <span class="text-green">{{ scope.row.change_percent }}%</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="amount" label="封单" min-width="80">
                 <template #default="scope">
                     {{ formatAmount(scope.row.amount) }}
                 </template>
@@ -284,6 +330,8 @@ const ranking920List = ref([])
 const ranking915List = ref([])
 const yesterdayLimitUpList = ref([])
 const limitUp925List = ref([])
+const limitDown925List = ref([])
+const abnormalMovement925List = ref([])
 const marketSentiment = ref(null)
 
 // Refs for scroll synchronization
@@ -741,6 +789,8 @@ const startTimer = () => {
     timer = setInterval(() => {
       fetchTopN()
       fetchLimitUp925()
+      fetchAbnormalMovement925()
+      fetchLimitDown925()
       fetchMarketSentiment()
       // Optional: fetchYesterdayLimitUp usually doesn't change often, but can be added if needed
     }, refreshInterval.value)
@@ -788,6 +838,8 @@ const refreshAll = () => {
   fetchTopN()
   fetchYesterdayLimitUp()
   fetchLimitUp925()
+  fetchAbnormalMovement925()
+  fetchLimitDown925()
   fetchMarketSentiment()
 }
 
@@ -857,6 +909,31 @@ const fetchLimitUp925 = async () => {
   }
 }
 
+const fetchAbnormalMovement925 = async () => {
+  try {
+    const response = await axios.get('/api/call_auction/abnormal_movement_925', {
+      params: { 
+        date: selectedDate.value,
+        limit: 50 
+      }
+    })
+    abnormalMovement925List.value = response.data
+  } catch (error) {
+    console.error('Error fetching abnormal movement 925:', error)
+  }
+}
+
+const fetchLimitDown925 = async () => {
+  try {
+    const response = await axios.get('/api/call_auction/limit_down_925', {
+      params: { date: selectedDate.value }
+    })
+    limitDown925List.value = response.data
+  } catch (error) {
+    console.error('Error fetching limit down 925:', error)
+  }
+}
+
 const fetchYesterdayLimitUp = async () => {
   try {
     // New logic: Use "performance" mode which handles the date calculation on backend
@@ -906,7 +983,7 @@ onUnmounted(() => {
 
 <style scoped>
 .dashboard-container {
-  padding: 5px;
+  padding: 2px;
 }
 
 /* List Header Title Style */

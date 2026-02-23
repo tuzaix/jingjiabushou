@@ -183,6 +183,12 @@ const handleThemeCommand = (command) => {
   align-items: center;
 }
 
+/* Layout Content Area */
+.el-main {
+    padding: 4px; /* Minimize padding to fill screen */
+    overflow-x: hidden;
+}
+
 /* Logo Styles */
 .logo-area {
     display: flex;

@@ -435,6 +435,112 @@ class MarketService:
             return []
 
     @staticmethod
+    def get_limit_down_at_925(date_str=None):
+        """
+        Get stocks with limit down change at 09:25:00.
+        """
+        if not date_str:
+            date_str = datetime.date.today().strftime('%Y-%m-%d')
+            
+        cache_key = f"limit_down_925:{date_str}"
+        cached_data = CacheManager.get(cache_key)
+        if cached_data:
+            return cached_data
+
+        query = """
+        SELECT code, name, sector,
+               bidding_percent as change_percent, 
+               asking_amount as amount, 
+               0 as price, 
+               time, date
+        FROM call_auction_data 
+        WHERE date = %s 
+          AND time >= '09:25:00' AND time < '09:26:00' 
+          AND (
+            (name LIKE '%%ST%%' AND bidding_percent <= -4.9)
+            OR
+            (name NOT LIKE '%%ST%%' AND (
+                ((code LIKE '30%%' OR code LIKE '688%%') AND bidding_percent <= -19.8)
+                OR
+                ((code LIKE '8%%' OR code LIKE '43%%' OR code LIKE '92%%') AND bidding_percent <= -29.8)
+                OR
+                (code NOT LIKE '30%%' AND code NOT LIKE '688%%' AND code NOT LIKE '8%%' AND code NOT LIKE '43%%' AND code NOT LIKE '92%%' AND bidding_percent <= -9.8)
+            ))
+          )
+        ORDER BY asking_amount DESC
+        """
+        try:
+            data = DatabaseManager.execute_query(query, (date_str,), dictionary=True)
+            
+            for row in data:
+                if isinstance(row['date'], datetime.date):
+                    row['date'] = row['date'].strftime('%Y-%m-%d')
+                if isinstance(row['time'], datetime.timedelta):
+                    row['time'] = str(row['time'])
+                elif isinstance(row['time'], datetime.time):
+                    row['time'] = row['time'].strftime('%H:%M:%S')
+            
+            CacheManager.set(cache_key, data, ttl=5)
+            return data
+        except Exception as e:
+            logger.error(f"Error fetching limit down at 9:25: {e}")
+            return []
+
+    @staticmethod
+    def get_abnormal_movement_at_925(date_str=None, limit=20):
+        """
+        Get 'Abnormal Movement' stocks at 9:25.
+        Defined as: High turnover (asking_amount) but NOT Limit Up and NOT Limit Down.
+        """
+        if not date_str:
+            date_str = datetime.date.today().strftime('%Y-%m-%d')
+            
+        cache_key = f"abnormal_movement_925:{date_str}:{limit}"
+        cached_data = CacheManager.get(cache_key)
+        if cached_data:
+            return cached_data
+
+        query = """
+        SELECT code, name, sector,
+               bidding_percent as change_percent, 
+               asking_amount as amount, 
+               0 as price, 
+               time, date
+        FROM call_auction_data 
+        WHERE date = %s 
+          AND time >= '09:25:00' AND time < '09:26:00' 
+          AND NOT (
+            (name LIKE '%%ST%%' AND (bidding_percent >= 4.9 OR bidding_percent <= -4.9))
+            OR
+            (name NOT LIKE '%%ST%%' AND (
+                ((code LIKE '30%%' OR code LIKE '688%%') AND (bidding_percent >= 19.8 OR bidding_percent <= -19.8))
+                OR
+                ((code LIKE '8%%' OR code LIKE '43%%' OR code LIKE '92%%') AND (bidding_percent >= 29.8 OR bidding_percent <= -29.8))
+                OR
+                (code NOT LIKE '30%%' AND code NOT LIKE '688%%' AND code NOT LIKE '8%%' AND code NOT LIKE '43%%' AND code NOT LIKE '92%%' AND (bidding_percent >= 9.8 OR bidding_percent <= -9.8))
+            ))
+          )
+        ORDER BY asking_amount DESC
+        LIMIT %s
+        """
+        try:
+            data = DatabaseManager.execute_query(query, (date_str, limit), dictionary=True)
+            
+            for row in data:
+                if isinstance(row['date'], datetime.date):
+                    row['date'] = row['date'].strftime('%Y-%m-%d')
+                if isinstance(row['time'], datetime.timedelta):
+                    row['time'] = str(row['time'])
+                elif isinstance(row['time'], datetime.time):
+                    row['time'] = row['time'].strftime('%H:%M:%S')
+            
+            CacheManager.set(cache_key, data, ttl=5)
+            return data
+        except Exception as e:
+            logger.error(f"Error fetching abnormal movement at 9:25: {e}")
+            return []
+
+    @staticmethod
     def get_market_sentiment_925(date_str=None):
         """
         Get market sentiment stats at 9:25 for the given date (Today) and previous trading day (Yesterday).
