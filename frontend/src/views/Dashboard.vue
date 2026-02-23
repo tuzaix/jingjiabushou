@@ -101,7 +101,7 @@
       </el-col>
 
       <!-- 2. Yesterday Limit Up (Middle) -->
-      <el-col :span="6">
+      <el-col :span="5">
           <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }" style="height: calc(100vh - 70px); display: flex; flex-direction: column;">
             <template #header>
               <div class="card-header">
@@ -144,7 +144,7 @@
       </el-col>
 
       <!-- 3. Right Side (Sentiment + Tables) -->
-      <el-col :span="12">
+      <el-col :span="13">
         <div style="height: calc(100vh - 70px); display: flex; flex-direction: column; gap: 4px;">
           <!-- 3.1 Market Sentiment -->
           <el-card class="box-card" :body-style="{ padding: '15px' }" style="flex: 0 0 auto;">
