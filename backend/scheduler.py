@@ -36,6 +36,25 @@ def job_fetch_call_auction():
         logger.info(f"Executing job_fetch_call_auction for date: {trading_day}")
         tasks.run_update_call_auction_data(date_str=trading_day)
 
+def job_fetch_index_data():
+    '''
+    定时获取开盘啦指数数据 - runs every 30 seconds from 9:15 to 15:00
+    '''
+    now = datetime.datetime.now().time()
+    today_str = datetime.date.today().strftime('%Y-%m-%d')
+    
+    # Check if within 9:15 - 15:00
+    start_time = datetime.time(9, 15)
+    end_time = datetime.time(15, 0)
+    
+    if not (start_time <= now <= end_time):
+        return
+
+    # Check if today is a trading day
+    date_str = get_current_or_previous_trading_day()
+    logger.info(f"Executing job_fetch_index_data for date: {date_str}")
+    tasks.run_fetch_index_data(date_str)
+
 def job_update_stock_list():
     '''
     定时获取东方财富的竞价请求，解析里面的--data-raw的股票列表到数据库，3天更新一次
@@ -64,6 +83,9 @@ def start_scheduler(blocking=False):
         
     # 定时获取东方财富的竞价数据 - runs every 10 seconds from 9:15 to 9:30
     scheduler.add_job(job_fetch_call_auction, 'cron', day_of_week='mon-fri', hour=9, minute='15-30', second='*/10')
+
+    # 定时获取开盘啦指数数据 - runs every 30 seconds from 9:15 to 15:00
+    scheduler.add_job(job_fetch_index_data, 'cron', day_of_week='mon-fri', hour='9-15', second='*/30')
 
     # 定时获取东方财富的竞价请求，解析里面的--data-raw的股票列表到数据库，3天更新一次
     scheduler.add_job(job_update_stock_list, 'cron', day_of_week='mon-fri', hour=9, minute=0)

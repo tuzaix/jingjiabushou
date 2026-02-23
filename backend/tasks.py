@@ -3,6 +3,7 @@ import datetime
 from services.sync_service import SyncService
 from services.jiuyan_service import JiuyanService
 from services.eastmoney_service import EastmoneyService
+from services.kaipanla_service import KaipanlaService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -41,12 +42,24 @@ def run_update_yesterday_limit_up(date_str=None):
         logger.error(f"Task failed: run_update_yesterday_limit_up. Error: {e}")
         return None
 
+def run_fetch_index_data(date_str=None):
+    """Fetch index data using KaipanlaService."""
+    logger.info(f"Task started: run_fetch_index_data (date={date_str})")
+    try:
+        success, msg = KaipanlaService.save_index_data(date_str)
+        logger.info(f"Task completed: run_fetch_index_data. {msg}")
+        return success
+    except Exception as e:
+        logger.error(f"Task failed: run_fetch_index_data. Error: {e}")
+        return False
+
 if __name__ == "__main__":
     # Test run
     # get_all_stock_codes()
     # fetch_call_auction_data()
     # fetch_yesterday_limit_up()
     #JiuyanService.sync_data('2026-02-13')
-    run_update_call_auction_data(date_str='2026-02-13')
+    # run_update_call_auction_data(date_str='2026-02-13')
     # run_update_yesterday_limit_up(date_str='2026-02-13')
+    run_fetch_index_data('2026-02-13')
     pass
