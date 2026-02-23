@@ -243,7 +243,24 @@
                  </div>
                </div>
             </div>
-            <div v-else class="no-data">暂无数据</div>
+            
+            <!-- Index Data Card -->
+            <div v-if="indexData && indexData.length > 0" class="market-overview-row" style="margin-top: 8px;">
+                <div v-for="idx in indexData" :key="idx.index_code" class="stat-card single-col">
+                    <div class="stat-header-mini center">
+                        <span class="stat-label">{{ idx.index_name }}</span>
+                    </div>
+                    <div class="stat-content-mini center">
+                        <div class="value-row">
+                            <span :class="getChangeClass(idx.change_rate)" class="stat-value">{{ idx.current_price }}</span>
+                        </div>
+                        <div class="value-row">
+                             <span :class="getChangeClass(idx.change_rate)" style="font-size: 12px;">{{ idx.change_rate }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div v-else class="no-data" style="margin-top: 8px; text-align: center; color: #999; font-size: 12px;">暂无指数数据</div>
           </el-card>
 
           <div style="flex: 1; display: flex; gap: 4px; min-height: 0;">
@@ -335,6 +352,7 @@ const limitUp925List = ref([])
 const limitDown925List = ref([])
 const abnormalMovement925List = ref([])
 const marketSentiment = ref(null)
+const indexData = ref([])
 
 // Refs for scroll synchronization
 const rankListRef = ref(null)
@@ -836,14 +854,6 @@ const fetchMarketSentiment = async () => {
   }
 }
 
-const refreshAll = () => {
-  fetchTopN()
-  fetchYesterdayLimitUp()
-  fetchLimitUp925()
-  fetchAbnormalMovement925()
-  fetchLimitDown925()
-  fetchMarketSentiment()
-}
 
 const getTodayStr = () => {
   const today = new Date()
@@ -936,6 +946,17 @@ const fetchLimitDown925 = async () => {
   }
 }
 
+const fetchIndexData = async () => {
+    try {
+        const res = await axios.get('/api/index/latest', {
+            params: { date: selectedDate.value }
+        })
+        indexData.value = res.data
+    } catch (e) {
+        console.error('Failed to fetch index data:', e)
+    }
+}
+
 const fetchYesterdayLimitUp = async () => {
   try {
     // New logic: Use "performance" mode which handles the date calculation on backend
@@ -956,6 +977,16 @@ const fetchYesterdayLimitUp = async () => {
   } catch (error) {
     console.error('Error fetching yesterday limit up:', error)
   }
+}
+
+const refreshAll = () => {
+  fetchTopN()
+  fetchYesterdayLimitUp()
+  fetchLimitUp925()
+  fetchAbnormalMovement925()
+  fetchLimitDown925()
+  fetchMarketSentiment()
+  fetchIndexData()
 }
 
 onMounted(async () => {

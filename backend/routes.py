@@ -22,6 +22,12 @@ def log_response_info(response):
     logger.info(f"Response: {response.status} | Duration: {duration:.3f}s")
     return response
 
+@api_bp.route('/api/index/latest', methods=['GET'])
+def get_latest_index():
+    date_str = request.args.get('date')
+    data = KaipanlaService.get_latest_index_data(date_str)
+    return jsonify(data)
+
 @api_bp.route('/api/call_auction/top_n', methods=['GET'])
 def get_top_n():
     limit = request.args.get('limit', 20, type=int)
