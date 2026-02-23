@@ -123,7 +123,7 @@
                          @mouseleave="handleMouseLeave">
                          
                        <div v-if="item.is_20cm" class="limit-up-20cm-badge">20cm</div>
-                       <div v-if="item.edition && item.edition > 1 && item.edition !== item.consecutive_boards" class="edition-badge">{{ item.edition }}天{{ item.consecutive_boards }}板</div>
+                       <div v-if="item.edition && item.edition > 1 && item.edition !== item.consecutive_boards" class="edition-badge">{{ item.consecutive_days }}天{{ item.edition }}板</div>
                        
                        <div style="display: flex; flex-direction: column; width: 100%;">
                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
