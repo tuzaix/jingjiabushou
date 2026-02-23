@@ -197,6 +197,54 @@
             />
           </div>
         </el-card>
+
+        <el-card class="box-card" style="margin-top: 20px;">
+          <template #header>
+            <div class="card-header">
+              <span>获取【开盘啦实时指数】数据，定期更新cURL，测试后保存生效。</span>
+            </div>
+          </template>
+          
+          <div class="config-section">
+            <el-alert
+              title="说明：请从浏览器开发者工具中复制【实时指数】相关请求的 cURL (bash) 命令，粘贴到下方文本框中。系统将自动提取 URL、Headers 和 Body 信息。"
+              type="info"
+              show-icon
+              :closable="false"
+              style="margin-bottom: 20px;"
+            />
+            
+            <el-form label-position="top">
+              <el-form-item label="cURL 命令">
+                <el-input
+                  v-model="kaipanlaIndexCurlCommand"
+                  type="textarea"
+                  :rows="10"
+                  placeholder="请粘贴 curl 'https://...' ..."
+                />
+              </el-form-item>
+              
+              <el-form-item>
+                <el-button type="primary" @click="saveKaipanlaIndexConfig" :loading="kaipanlaIndexSaving">保存配置</el-button>
+                <el-button type="success" @click="testKaipanlaIndexFetch" :loading="kaipanlaIndexTesting">测试抓取</el-button>
+              </el-form-item>
+            </el-form>
+          </div>
+
+          <div v-if="kaipanlaIndexTestResult" class="result-section">
+            <div class="result-header">
+              <span>测试结果</span>
+              <el-tag :type="kaipanlaIndexTestSuccess ? 'success' : 'danger'">{{ kaipanlaIndexTestSuccess ? '成功' : '失败' }}</el-tag>
+            </div>
+            <el-input
+              v-model="kaipanlaIndexTestResultStr"
+              type="textarea"
+              :rows="15"
+              readonly
+              class="result-textarea"
+            />
+          </div>
+        </el-card>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -263,6 +311,20 @@ const kaipanlaVolumeTestResultStr = computed(() => {
   return typeof kaipanlaVolumeTestResult.value === 'string' 
     ? kaipanlaVolumeTestResult.value 
     : JSON.stringify(kaipanlaVolumeTestResult.value, null, 2)
+})
+
+// Kaipanla Index Variables
+const kaipanlaIndexCurlCommand = ref('')
+const kaipanlaIndexSaving = ref(false)
+const kaipanlaIndexTesting = ref(false)
+const kaipanlaIndexTestResult = ref(null)
+const kaipanlaIndexTestSuccess = ref(false)
+
+const kaipanlaIndexTestResultStr = computed(() => {
+  if (!kaipanlaIndexTestResult.value) return ''
+  return typeof kaipanlaIndexTestResult.value === 'string' 
+    ? kaipanlaIndexTestResult.value 
+    : JSON.stringify(kaipanlaIndexTestResult.value, null, 2)
 })
 
 // Jiuyan Methods
@@ -437,6 +499,49 @@ const testKaipanlaVolumeFetch = async () => {
   }
 }
 
+// Kaipanla Index Methods
+const saveKaipanlaIndexConfig = async () => {
+  if (!kaipanlaIndexCurlCommand.value) {
+    ElMessage.warning('请输入 cURL 命令')
+    return
+  }
+  
+  kaipanlaIndexSaving.value = true
+  try {
+    const response = await axios.post('/api/admin/kaipanla/index/config', {
+      curl: kaipanlaIndexCurlCommand.value
+    })
+    ElMessage.success(response.data.message || '配置保存成功')
+  } catch (error) {
+    ElMessage.error(error.response?.data?.error || '保存失败')
+  } finally {
+    kaipanlaIndexSaving.value = false
+  }
+}
+
+const testKaipanlaIndexFetch = async () => {
+  kaipanlaIndexTesting.value = true
+  kaipanlaIndexTestResult.value = null
+  kaipanlaIndexTestSuccess.value = false
+  
+  try {
+    const response = await axios.post('/api/admin/kaipanla/index/test')
+    kaipanlaIndexTestResult.value = response.data
+    kaipanlaIndexTestSuccess.value = response.data.success
+    if (response.data.success) {
+      ElMessage.success('测试成功')
+    } else {
+      ElMessage.warning('测试完成但返回失败状态')
+    }
+  } catch (error) {
+    console.error('Test failed:', error)
+    kaipanlaIndexTestResult.value = error.response?.data || error.message
+    ElMessage.error('测试请求失败')
+  } finally {
+    kaipanlaIndexTesting.value = false
+  }
+}
+
 // Fetch configs on mount
 const fetchConfigs = async () => {
   try {
@@ -473,6 +578,15 @@ const fetchConfigs = async () => {
     }
   } catch (error) {
     console.error('Error fetching Kaipanla Volume config:', error)
+  }
+
+  try {
+    const kaipanlaIndexRes = await axios.get('/api/admin/kaipanla/index/config')
+    if (kaipanlaIndexRes.data && kaipanlaIndexRes.data.curl) {
+      kaipanlaIndexCurlCommand.value = kaipanlaIndexRes.data.curl
+    }
+  } catch (error) {
+    console.error('Error fetching Kaipanla Index config:', error)
   }
 }
 

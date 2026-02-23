@@ -22,6 +22,14 @@ class KaipanlaService(BaseCurlService):
         return success, msg
 
     @staticmethod
+    def update_index_config(curl_command):
+        """
+        Parses the curl command and saves the index configuration to the database.
+        """
+        success, msg, _ = BaseCurlService._update_config_base(curl_command, 'kaipanla_index')
+        return success, msg
+
+    @staticmethod
     def get_config():
         """
         Retrieves the call auction configuration from the database.
@@ -36,6 +44,13 @@ class KaipanlaService(BaseCurlService):
         return BaseCurlService._get_config_base('kaipanla_volume')
 
     @staticmethod
+    def get_index_config():
+        """
+        Retrieves the index configuration from the database.
+        """
+        return BaseCurlService._get_config_base('kaipanla_index')
+
+    @staticmethod
     def fetch_data():
         """
         Fetches call auction data using the stored configuration.
@@ -48,3 +63,10 @@ class KaipanlaService(BaseCurlService):
         Fetches volume data using the stored configuration.
         """
         return BaseCurlService._fetch_data_base('kaipanla_volume')
+
+    @staticmethod
+    def fetch_index_data():
+        """
+        Fetches index data using the stored configuration.
+        """
+        return BaseCurlService._fetch_data_base('kaipanla_index')

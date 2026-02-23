@@ -254,7 +254,7 @@
                 <span>一字板</span>
               </div>
             </template>
-            <el-table :data="limitUp925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
+            <el-table class="no-scrollbar-table" :data="limitUp925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
                 <el-table-column prop="name" label="名称" width="90" show-overflow-tooltip />
                 <el-table-column prop="change_percent" label="涨幅" width="75" align="center">
                     <template #default="scope">
@@ -277,7 +277,7 @@
                 <span>异动</span>
               </div>
             </template>
-            <el-table :data="abnormalMovement925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
+            <el-table class="no-scrollbar-table" :data="abnormalMovement925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
                 <el-table-column prop="name" label="名称" width="90" show-overflow-tooltip />
                 <el-table-column prop="change_percent" label="涨幅" width="75" align="center">
                     <template #default="scope">
@@ -300,7 +300,7 @@
                 <span>核按钮</span>
               </div>
             </template>
-            <el-table :data="limitDown925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
+            <el-table class="no-scrollbar-table" :data="limitDown925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
                 <el-table-column prop="name" label="名称" width="90" show-overflow-tooltip />
                 <el-table-column prop="change_percent" label="跌幅" width="75" align="center">
                     <template #default="scope">
@@ -1495,5 +1495,25 @@ onUnmounted(() => {
   text-align: center;
   color: var(--text-secondary);
   padding: 20px;
+}
+
+/* Hide scrollbar for tables with no-scrollbar-table class */
+.no-scrollbar-table .el-table__body-wrapper::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+.no-scrollbar-table .el-table__body-wrapper {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar-table .el-table__header-wrapper .el-table__header {
+   width: 100% !important;
+}
+
+.no-scrollbar-table .el-table__body-wrapper .el-table__body {
+   width: 100% !important;
 }
 </style>
