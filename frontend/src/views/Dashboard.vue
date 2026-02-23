@@ -99,7 +99,7 @@
         </el-card>
       </el-col>
 
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card class="box-card" :body-style="{ padding: '0px' }">
           <template #header>
             <div class="card-header">
@@ -141,7 +141,7 @@
         </el-card>
       </el-col>
       
-      <el-col :span="8">
+      <el-col :span="10">
         <div style="height: calc(100vh - 120px); display: flex; flex-direction: column; gap: 20px;">
           <!-- 1. Market Sentiment -->
           <el-card class="box-card" :body-style="{ padding: '15px' }" style="flex: 0 0 auto;">
