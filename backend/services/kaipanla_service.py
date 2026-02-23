@@ -80,6 +80,7 @@ class KaipanlaService(BaseCurlService):
         SELECT index_code, index_name, increase_amount, increase_rate, index_volume
         FROM index_data
         WHERE date = %s
+        AND index_code != 'SZ399001'
         AND time = (
             SELECT MAX(time)
             FROM index_data

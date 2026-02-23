@@ -251,11 +251,10 @@
                         <span class="stat-label">{{ idx.index_name }}</span>
                     </div>
                     <div class="stat-content-mini center">
-                        <div class="value-row">
+                        <div class="value-row" style="display: flex; justify-content: center; gap: 8px; align-items: baseline;">
+                            <span :class="getChangeClass(idx.increase_rate)" style="font-size: 14px; font-weight: bold;">{{ idx.increase_rate }}%</span>
                             <span :class="getChangeClass(idx.increase_rate)" class="stat-value" style="font-size: 16px;">{{ idx.index_volume }}</span>
-                        </div>
-                        <div class="value-row">
-                             <span :class="getChangeClass(idx.increase_rate)" style="font-size: 12px;">{{ idx.increase_rate }}%</span>
+                            <span :class="getChangeClass(idx.increase_rate)" style="font-size: 12px;">{{ idx.increase_amount }}</span>
                         </div>
                     </div>
                 </div>
