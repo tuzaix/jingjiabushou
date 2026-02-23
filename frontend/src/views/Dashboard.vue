@@ -245,17 +245,17 @@
             </div>
             
             <!-- Index Data Card -->
-            <div v-if="indexData && indexData.length > 0" class="market-overview-row" style="margin-top: 8px;">
-                <div v-for="idx in indexData" :key="idx.index_code" class="stat-card single-col">
-                    <div class="stat-header-mini center">
+            <div v-if="indexData && indexData.length > 0" class="market-overview-row" style="margin-top: 8px; display: flex; flex-direction: row; gap: 8px;">
+                <div v-for="idx in indexData" :key="idx.index_code" class="stat-card single-col" style="flex: 1; padding: 5px; text-align: center;">
+                    <div class="stat-header-mini center" style="margin-bottom: 5px;">
                         <span class="stat-label">{{ idx.index_name }}</span>
                     </div>
                     <div class="stat-content-mini center">
                         <div class="value-row">
-                            <span :class="getChangeClass(idx.change_rate)" class="stat-value">{{ idx.current_price }}</span>
+                            <span :class="getChangeClass(idx.increase_rate)" class="stat-value" style="font-size: 16px;">{{ idx.index_volume }}</span>
                         </div>
                         <div class="value-row">
-                             <span :class="getChangeClass(idx.change_rate)" style="font-size: 12px;">{{ idx.change_rate }}%</span>
+                             <span :class="getChangeClass(idx.increase_rate)" style="font-size: 12px;">{{ idx.increase_rate }}%</span>
                         </div>
                     </div>
                 </div>
