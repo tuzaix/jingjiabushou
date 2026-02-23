@@ -381,6 +381,48 @@ class MarketService:
             return []
 
     @staticmethod
+    def _enrich_with_yesterday_limit_up_theme(data_list, current_date_str):
+        """
+        Helper method to enrich a list of stock data with yesterday's limit up theme (sector).
+        Prioritizes yesterday's theme over the current sector.
+        """
+        if not data_list:
+            return data_list
+            
+        # 1. Find previous trading day
+        trading_days = MarketService.get_trading_days()
+        prev_date_str = None
+        if trading_days and current_date_str in trading_days:
+            idx = trading_days.index(current_date_str)
+            if idx > 0:
+                prev_date_str = trading_days[idx - 1]
+        
+        if not prev_date_str:
+            # Fallback or just return original
+            return data_list
+            
+        # 2. Get yesterday's limit up themes
+        query = """
+        SELECT name, limit_up_type as theme
+        FROM yesterday_limit_up
+        WHERE date = %s AND limit_up_type IS NOT NULL AND limit_up_type != ''
+        """
+        try:
+            rows = DatabaseManager.execute_query(query, (prev_date_str,), dictionary=True)
+            theme_map = {row['name']: row['theme'] for row in rows}
+            
+            # 3. Enrich data
+            for item in data_list:
+                name = item.get('name')
+                if name and name in theme_map:
+                    item['sector'] = theme_map[name] # Override/Set sector with yesterday's theme
+                    
+        except Exception as e:
+            logger.error(f"Error enriching with yesterday theme: {e}")
+            
+        return data_list
+
+    @staticmethod
     def get_limit_up_at_925(date_str=None):
         """
         Get stocks with >= 9.9% change at 09:25:00.
@@ -427,6 +469,9 @@ class MarketService:
                     row['time'] = str(row['time'])
                 elif isinstance(row['time'], datetime.time):
                     row['time'] = row['time'].strftime('%H:%M:%S')
+            
+            # Enrich with yesterday's limit up theme
+            data = MarketService._enrich_with_yesterday_limit_up_theme(data, date_str)
             
             CacheManager.set(cache_key, data, ttl=5)
             return data
@@ -480,6 +525,9 @@ class MarketService:
                 elif isinstance(row['time'], datetime.time):
                     row['time'] = row['time'].strftime('%H:%M:%S')
             
+            # Enrich with yesterday's limit up theme
+            data = MarketService._enrich_with_yesterday_limit_up_theme(data, date_str)
+
             CacheManager.set(cache_key, data, ttl=5)
             return data
         except Exception as e:
@@ -533,6 +581,9 @@ class MarketService:
                     row['time'] = str(row['time'])
                 elif isinstance(row['time'], datetime.time):
                     row['time'] = row['time'].strftime('%H:%M:%S')
+            
+            # Enrich with yesterday's limit up theme
+            data = MarketService._enrich_with_yesterday_limit_up_theme(data, date_str)
             
             CacheManager.set(cache_key, data, ttl=5)
             return data

@@ -2,7 +2,7 @@
   <div class="dashboard-container">
     <el-row :gutter="4">
       <!-- 1. Ranking Monitor (Left) -->
-      <el-col :span="7">
+      <el-col :span="6">
           <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }" style="height: calc(100vh - 70px); display: flex; flex-direction: column;">
           <template #header>
             <div class="card-header">
@@ -101,7 +101,7 @@
       </el-col>
 
       <!-- 2. Yesterday Limit Up (Middle) -->
-      <el-col :span="7">
+      <el-col :span="6">
           <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }" style="height: calc(100vh - 70px); display: flex; flex-direction: column;">
             <template #header>
               <div class="card-header">
@@ -144,7 +144,7 @@
       </el-col>
 
       <!-- 3. Right Side (Sentiment + Tables) -->
-      <el-col :span="10">
+      <el-col :span="12">
         <div style="height: calc(100vh - 70px); display: flex; flex-direction: column; gap: 4px;">
           <!-- 3.1 Market Sentiment -->
           <el-card class="box-card" :body-style="{ padding: '15px' }" style="flex: 0 0 auto;">
@@ -255,17 +255,18 @@
               </div>
             </template>
             <el-table :data="limitUp925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
-                <el-table-column prop="name" label="名称" width="70" />
-                <el-table-column prop="change_percent" label="涨幅" width="60">
+                <el-table-column prop="name" label="名称" width="70" show-overflow-tooltip />
+                <el-table-column prop="change_percent" label="涨幅" width="70" align="center">
                     <template #default="scope">
                     <span class="text-red">{{ scope.row.change_percent }}%</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="amount" label="封单" min-width="80">
+                <el-table-column prop="amount" label="封单" width="85" align="right">
                 <template #default="scope">
                     {{ formatAmount(scope.row.amount) }}
                 </template>
                 </el-table-column>
+                <el-table-column prop="sector" label="题材" min-width="60" show-overflow-tooltip />
             </el-table>
           </el-card>
 
@@ -277,17 +278,18 @@
               </div>
             </template>
             <el-table :data="abnormalMovement925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
-                <el-table-column prop="name" label="名称" width="70" />
-                <el-table-column prop="change_percent" label="涨幅" width="60">
+                <el-table-column prop="name" label="名称" width="70" show-overflow-tooltip />
+                <el-table-column prop="change_percent" label="涨幅" width="70" align="center">
                     <template #default="scope">
                     <span :class="getChangeClass(scope.row.change_percent)">{{ scope.row.change_percent }}%</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="amount" label="成交" min-width="80">
+                <el-table-column prop="amount" label="成交" width="85" align="right">
                 <template #default="scope">
                     {{ formatAmount(scope.row.amount) }}
                 </template>
                 </el-table-column>
+                <el-table-column prop="sector" label="题材" min-width="60" show-overflow-tooltip />
             </el-table>
           </el-card>
 
@@ -299,17 +301,18 @@
               </div>
             </template>
             <el-table :data="limitDown925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
-                <el-table-column prop="name" label="名称" width="70" />
-                <el-table-column prop="change_percent" label="跌幅" width="60">
+                <el-table-column prop="name" label="名称" width="70" show-overflow-tooltip />
+                <el-table-column prop="change_percent" label="跌幅" width="70" align="center">
                     <template #default="scope">
                     <span class="text-green">{{ scope.row.change_percent }}%</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="amount" label="封单" min-width="80">
+                <el-table-column prop="amount" label="封单" width="85" align="right">
                 <template #default="scope">
                     {{ formatAmount(scope.row.amount) }}
                 </template>
                 </el-table-column>
+                <el-table-column prop="sector" label="题材" min-width="60" show-overflow-tooltip />
             </el-table>
           </el-card>
           </div>
