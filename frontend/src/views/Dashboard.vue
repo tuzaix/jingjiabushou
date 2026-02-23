@@ -127,12 +127,20 @@
                        
                        <div style="display: flex; flex-direction: column; width: 100%;">
                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                               <span class="stock-name">{{ item.name }}</span>
+                               <div style="display: flex; align-items: center; gap: 4px;">
+                                 <span class="stock-name">{{ item.name }}</span>
+                                 <div v-if="item.is_20cm" class="circle-20cm">20cm</div>
+                               </div>
                                <span class="stock-info" :class="getChangeClass(item.change_percent)">{{ formatChange(item.change_percent) }}</span>
                            </div>
                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                               <span class="stock-info amount">{{ formatAmount(item.amount) }}</span>
-                               <span v-if="item.open_percent" class="stock-info" :class="getChangeClass(item.open_percent)">开:{{ formatChange(item.open_percent) }}</span>
+                               <span class="stock-info amount">
+                                 {{ formatAmount(item.amount) }}
+                                 <template v-if="item.change_percent >= 9.8 && item.bid_amount">
+                                   / {{ formatAmount(item.bid_amount) }}
+                                 </template>
+                               </span>
+                               <span class="stock-info" v-if="item.sector" style="max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; color: #666;">{{ item.sector }}</span>
                            </div>
                        </div>
                     </div>
@@ -1397,8 +1405,33 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
+.limit-up-20cm-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: var(--primary-gold);
+  color: white;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 8px;
+  transform: scale(0.85);
+  z-index: 10;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
 
-
+.circle-20cm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-gold);
+  color: white;
+  font-size: 9px;
+  width: 24px;
+  height: 14px;
+  border-radius: 7px;
+  margin-left: 2px;
+  line-height: 1;
+}
 
 /* Table Theme Adaptation */
 :deep(.el-table) {
