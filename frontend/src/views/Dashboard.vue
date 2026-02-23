@@ -153,6 +153,19 @@
                 <span>大局观 (9:25)</span>
               </div>
             </template>
+            <!-- Index Data Card -->
+            <div v-if="indexData && indexData.length > 0" class="market-overview-row" style="margin-bottom: 8px; display: flex; flex-direction: row; gap: 8px;">
+                <div v-for="idx in indexData" :key="idx.index_code" class="stat-card single-col" style="flex: 1; padding: 0 10px; display: flex; align-items: center; justify-content: center;">
+                    <div class="stat-content-mini center" style="display: flex; flex-direction: row; gap: 10px; align-items: baseline; width: 100%; justify-content: center;">
+                        <span class="stat-label" style="font-weight: bold; font-size: 16px; white-space: nowrap;">{{ idx.index_name }}</span>
+                        <span :class="getChangeClass(idx.increase_rate)" style="font-size: 16px; font-weight: bold;">{{ idx.increase_rate }}%</span>
+                        <span :class="getChangeClass(idx.increase_rate)" class="stat-value" style="font-size: 16px;">{{ idx.index_volume }}</span>
+                        <span :class="getChangeClass(idx.increase_rate)" style="font-size: 14px;">{{ idx.increase_amount }}</span>
+                    </div>
+                </div>
+            </div>
+            <div v-else class="no-data" style="margin-bottom: 8px; text-align: center; color: #999; font-size: 12px;">暂无指数数据</div>
+
             <div class="sentiment-grid" v-if="marketSentiment && marketSentiment.today">
                <!-- Card 1: Limit Up / Down -->
                <div class="stat-card mixed-bg">
@@ -244,18 +257,7 @@
                </div>
             </div>
             
-            <!-- Index Data Card -->
-            <div v-if="indexData && indexData.length > 0" class="market-overview-row" style="margin-top: 8px; display: flex; flex-direction: row; gap: 8px;">
-                <div v-for="idx in indexData" :key="idx.index_code" class="stat-card single-col" style="flex: 1; padding: 0 10px; display: flex; align-items: center; justify-content: center;">
-                    <div class="stat-content-mini center" style="display: flex; flex-direction: row; gap: 10px; align-items: baseline; width: 100%; justify-content: center;">
-                        <span class="stat-label" style="font-weight: bold; font-size: 16px; white-space: nowrap;">{{ idx.index_name }}</span>
-                        <span :class="getChangeClass(idx.increase_rate)" style="font-size: 16px; font-weight: bold;">{{ idx.increase_rate }}%</span>
-                        <span :class="getChangeClass(idx.increase_rate)" class="stat-value" style="font-size: 16px;">{{ idx.index_volume }}</span>
-                        <span :class="getChangeClass(idx.increase_rate)" style="font-size: 14px;">{{ idx.increase_amount }}</span>
-                    </div>
-                </div>
-            </div>
-            <div v-else class="no-data" style="margin-top: 8px; text-align: center; color: #999; font-size: 12px;">暂无指数数据</div>
+
           </el-card>
 
           <div style="flex: 1; display: flex; gap: 4px; min-height: 0;">
