@@ -122,14 +122,13 @@
                          @mouseenter="handleMouseEnter(item.code)" 
                          @mouseleave="handleMouseLeave">
                          
-                       <div v-if="item.is_20cm" class="limit-up-20cm-badge">20cm</div>
+                       <div v-if="item.is_20cm" class="circle-20cm" title="20cm">20%</div>
                        <div v-if="item.edition && item.edition > 1 && item.edition !== item.consecutive_boards" class="edition-badge">{{ item.consecutive_days }}天{{ item.edition }}板</div>
                        
                        <div style="display: flex; flex-direction: column; width: 100%;">
                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                                <div style="display: flex; align-items: center; gap: 4px;">
                                  <span class="stock-name">{{ item.name }}</span>
-                                 <div v-if="item.is_20cm" class="circle-20cm">20cm</div>
                                </div>
                                <span class="stock-info" :class="getChangeClass(item.change_percent)">{{ formatChange(item.change_percent) }}</span>
                            </div>
@@ -1420,17 +1419,23 @@ onUnmounted(() => {
 }
 
 .circle-20cm {
-  display: inline-flex;
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--primary-gold);
+  background-color: #F56C6C;
   color: white;
-  font-size: 9px;
-  width: 24px;
-  height: 14px;
-  border-radius: 7px;
-  margin-left: 2px;
+  font-size: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
   line-height: 1;
+  z-index: 10;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 /* Table Theme Adaptation */

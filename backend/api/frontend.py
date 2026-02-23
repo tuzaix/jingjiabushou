@@ -46,7 +46,7 @@ def get_yesterday_limit_up():
     else:
         logger.debug(f"Querying Yesterday Limit Up: date={date_str}")
         data = MarketService.get_yesterday_limit_up(date_str=date_str)
-        
+
     logger.debug(f"Found {len(data)} records")
     return jsonify(data)
 
