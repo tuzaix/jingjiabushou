@@ -129,17 +129,17 @@ const handleThemeCommand = (command) => {
 
 /* Dark Theme */
 .front-layout.dark {
-    --bg-color: #121212;
-    --card-bg: #1e1e1e;
-    --text-primary: #e0e0e0;
-    --text-secondary: #a0a0a0;
+    --bg-color: #000000; /* Pure Black Background */
+    --card-bg: #1C1C1E; /* Dark Grey Card (iOS Style) */
+    --text-primary: #FFFFFF; /* Pure White Text */
+    --text-secondary: #B0B0B0; /* Light Grey Text */
     --text-placeholder: #606060;
-    --border-color: #333333;
-    --hover-bg: #2a2a2a;
+    --border-color: #38383A; /* Visible Dark Grey Border */
+    --hover-bg: #2C2C2E; /* Lighter Grey Hover */
     --hover-border: #cf1322;
-    --divider-color: #505050;
-    --control-label: #808080;
-    --table-header-bg: #2d2d2d;
+    --divider-color: #38383A;
+    --control-label: #8E8E93;
+    --table-header-bg: #2C2C2E; /* Distinct Header Background */
 }
 
 /* Eye-care Theme (Warm/Yellowish) */
@@ -274,5 +274,19 @@ const handleThemeCommand = (command) => {
 :deep(.el-switch.is-checked .el-switch__core) {
     border-color: #13ce66;
     background-color: #13ce66;
+}
+
+/* Global Override for Element Plus Card */
+:deep(.el-card) {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+:deep(.el-card__header) {
+    border-bottom-color: var(--border-color);
+}
+:deep(.el-card__body) {
+    color: var(--text-primary);
 }
 </style>
