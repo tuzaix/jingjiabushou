@@ -2,7 +2,7 @@
   <div class="dashboard-container">
     <el-row :gutter="4">
       <!-- 1. Ranking Monitor (Left) -->
-      <el-col :span="6">
+      <el-col :span="7">
           <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }" style="height: calc(100vh - 70px); display: flex; flex-direction: column;">
           <template #header>
             <div class="card-header">
@@ -101,7 +101,7 @@
       </el-col>
 
       <!-- 2. Yesterday Limit Up (Middle) -->
-      <el-col :span="5">
+      <el-col :span="7">
           <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }" style="height: calc(100vh - 70px); display: flex; flex-direction: column;">
             <template #header>
               <div class="card-header">
@@ -144,7 +144,7 @@
       </el-col>
 
       <!-- 3. Right Side (Sentiment + Tables) -->
-      <el-col :span="13">
+      <el-col :span="10">
         <div style="height: calc(100vh - 70px); display: flex; flex-direction: column; gap: 4px;">
           <!-- 3.1 Market Sentiment -->
           <el-card class="box-card" :body-style="{ padding: '15px' }" style="flex: 0 0 auto;">
@@ -266,20 +266,18 @@
                 <span>一字板</span>
               </div>
             </template>
-            <el-table class="no-scrollbar-table" :data="limitUp925List" style="width: 100%; flex: 1;" height="100%" stripe>
-                <el-table-column prop="name" label="名称" width="90" show-overflow-tooltip />
-                <el-table-column prop="change_percent" label="涨幅" width="75" align="center">
-                    <template #default="scope">
-                    <span class="text-red">{{ scope.row.change_percent }}%</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="amount" label="封单" width="90" align="right">
-                <template #default="scope">
-                    {{ formatAmount(scope.row.amount) }}
-                </template>
-                </el-table-column>
-                <el-table-column prop="sector" label="题材" min-width="60" show-overflow-tooltip />
-            </el-table>
+            <div class="card-list-container">
+                <div v-for="item in limitUp925List" :key="item.code" class="list-card" @mouseenter="hoveredCode = item.code" @mouseleave="hoveredCode = null" :class="{ 'is-hovered': hoveredCode === item.code }">
+                    <div class="list-card-row">
+                        <span class="list-card-name">{{ item.name }}</span>
+                        <span class="text-red" style="font-weight: bold;">{{ item.change_percent }}%</span>
+                    </div>
+                    <div class="list-card-row">
+                        <span class="list-card-amount">封单: {{ formatAmount(item.amount) }}</span>
+                        <span class="list-card-sector" v-if="item.sector">{{ item.sector }}</span>
+                    </div>
+                </div>
+            </div>
           </el-card>
 
           <!-- 3.3 Abnormal Movement -->
@@ -289,20 +287,18 @@
                 <span>异动</span>
               </div>
             </template>
-            <el-table class="no-scrollbar-table" :data="abnormalMovement925List" style="width: 100%; flex: 1;" height="100%" stripe>
-                <el-table-column prop="name" label="名称" width="90" show-overflow-tooltip />
-                <el-table-column prop="change_percent" label="涨幅" width="75" align="center">
-                    <template #default="scope">
-                    <span :class="getChangeClass(scope.row.change_percent)">{{ scope.row.change_percent }}%</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="amount" label="成交" width="90" align="right">
-                <template #default="scope">
-                    {{ formatAmount(scope.row.amount) }}
-                </template>
-                </el-table-column>
-                <el-table-column prop="sector" label="题材" min-width="60" show-overflow-tooltip />
-            </el-table>
+            <div class="card-list-container">
+                <div v-for="item in abnormalMovement925List" :key="item.code" class="list-card" @mouseenter="hoveredCode = item.code" @mouseleave="hoveredCode = null" :class="{ 'is-hovered': hoveredCode === item.code }">
+                    <div class="list-card-row">
+                        <span class="list-card-name">{{ item.name }}</span>
+                        <span :class="getChangeClass(item.change_percent)" style="font-weight: bold;">{{ item.change_percent }}%</span>
+                    </div>
+                    <div class="list-card-row">
+                        <span class="list-card-amount">成交: {{ formatAmount(item.amount) }}</span>
+                        <span class="list-card-sector" v-if="item.sector">{{ item.sector }}</span>
+                    </div>
+                </div>
+            </div>
           </el-card>
 
           <!-- 3.4 Nuclear Button (Limit Down) -->
@@ -312,20 +308,18 @@
                 <span>核按钮</span>
               </div>
             </template>
-            <el-table class="no-scrollbar-table" :data="limitDown925List" style="width: 100%; flex: 1;" height="100%" stripe>
-                <el-table-column prop="name" label="名称" width="90" show-overflow-tooltip />
-                <el-table-column prop="change_percent" label="跌幅" width="75" align="center">
-                    <template #default="scope">
-                    <span class="text-green">{{ scope.row.change_percent }}%</span>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="amount" label="封单" width="90" align="right">
-                <template #default="scope">
-                    {{ formatAmount(scope.row.amount) }}
-                </template>
-                </el-table-column>
-                <el-table-column prop="sector" label="题材" min-width="60" show-overflow-tooltip />
-            </el-table>
+            <div class="card-list-container">
+                <div v-for="item in limitDown925List" :key="item.code" class="list-card" @mouseenter="hoveredCode = item.code" @mouseleave="hoveredCode = null" :class="{ 'is-hovered': hoveredCode === item.code }">
+                    <div class="list-card-row">
+                        <span class="list-card-name">{{ item.name }}</span>
+                        <span class="text-green" style="font-weight: bold;">{{ item.change_percent }}%</span>
+                    </div>
+                    <div class="list-card-row">
+                        <span class="list-card-amount">封单: {{ formatAmount(item.amount) }}</span>
+                        <span class="list-card-sector" v-if="item.sector">{{ item.sector }}</span>
+                    </div>
+                </div>
+            </div>
           </el-card>
           </div>
         </div>
@@ -1346,6 +1340,87 @@ onUnmounted(() => {
 .mixed-bg {
   background: linear-gradient(to right, var(--card-bg), var(--bg-color));
 }
+
+/* List Card Styles */
+.card-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  min-height: 0;
+}
+
+.list-card {
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: var(--card-bg);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.list-card:last-child {
+  margin-bottom: 0;
+}
+
+.list-card:hover,
+.list-card.is-hovered {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: var(--hover-border);
+  background-color: var(--hover-bg);
+}
+
+.list-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.list-card-row:last-child {
+  margin-bottom: 0;
+}
+
+.list-card-name {
+  font-weight: bold;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.list-card-amount {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.list-card-sector {
+  font-size: 12px;
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Scrollbar for card list */
+.card-list-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.card-list-container::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 2px;
+}
+
+.card-list-container::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
 
 /* Table Theme Adaptation */
 :deep(.el-table) {
