@@ -134,9 +134,9 @@
                            </div>
                            <div style="display: flex; justify-content: space-between; align-items: center;">
                                <span class="stock-info amount">
-                                 {{ formatAmount(item.amount) }}
-                                 <template v-if="item.change_percent >= 9.8 && item.bid_amount">
-                                   / {{ formatAmount(item.bid_amount) }}
+                                 {{ formatAmount(item.bidding_amount) }}
+                                 <template v-if="item.change_percent >= 9.8 && item.bidding_amount">
+                                   / {{ formatAmount(item.bidding_amount) }}
                                  </template>
                                </span>
                                <span class="stock-info" v-if="item.sector" style="max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; color: #666;">{{ item.sector }}</span>
