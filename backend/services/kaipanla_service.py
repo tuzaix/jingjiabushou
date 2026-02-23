@@ -130,8 +130,14 @@ class KaipanlaService(BaseCurlService):
                 return False, "No data found"
 
             current_time = datetime.datetime.now()
-            date_str = current_time.strftime('%Y-%m-%d')
-            time_str = current_time.strftime('%H:%M:%S')
+        
+            # 如果current_time小于9:15则time_str等于09:15:00, 如果大于15点，则time_str=15:00:00，否则就是用当前时间
+            if current_time < datetime.datetime.now().replace(hour=9, minute=15, second=0):
+                time_str = '09:15:00'
+            elif current_time > datetime.datetime.now().replace(hour=15, minute=0, second=0):
+                time_str = '15:00:00'
+            else:
+                time_str = current_time.strftime('%H:%M:%S')
 
                 # {
                 #     "Icon": 0,
@@ -150,9 +156,9 @@ class KaipanlaService(BaseCurlService):
             for item in data_list:
                 index_code = item.get('StockID')   
                 index_name = item.get('prod_name')
-                increase_amount = item.get('increase_amount')
-                increase_rate = item.get('increase_rate').strip('%')
-                index_volume = item.get('last_px')
+                increase_amount = float(item.get('increase_amount'))
+                increase_rate = float(item.get('increase_rate').strip('%'))
+                index_volume = float(item.get('last_px'))
                
                 values_to_insert.append((
                     date_str, time_str, str(index_code), str(index_name), 
@@ -164,7 +170,7 @@ class KaipanlaService(BaseCurlService):
                 return False, "No valid items found"
 
             insert_sql = """
-            INSERT INTO index_data 
+            REPLACE INTO index_data 
             (date, time, index_code, index_name, increase_amount, increase_rate, index_volume)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
