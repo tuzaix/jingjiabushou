@@ -77,7 +77,7 @@ class KaipanlaService(BaseCurlService):
             date_str = datetime.date.today().strftime('%Y-%m-%d')
             
         query = """
-        SELECT index_code, index_name, current_price, change_rate, volume, amount, time
+        SELECT index_code, index_name, increase_amount, increase_rate, index_volume
         FROM index_data
         WHERE date = %s
         AND time = (
