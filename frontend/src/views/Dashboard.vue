@@ -246,15 +246,15 @@
             <div v-else class="no-data">暂无数据</div>
           </el-card>
 
-          <!-- 3.2 One Word Board -->
-          <el-card class="box-card" :body-style="{ padding: '0px' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+          <div style="flex: 1; display: flex; gap: 4px; min-height: 0;">
+            <!-- 3.2 One Word Board -->
+            <el-card class="box-card" :body-style="{ padding: '0px' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
             <template #header>
               <div class="card-header">
                 <span>一字板</span>
               </div>
             </template>
             <el-table :data="limitUp925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
-                <el-table-column prop="code" label="代码" width="70" />
                 <el-table-column prop="name" label="名称" width="70" />
                 <el-table-column prop="change_percent" label="涨幅" width="60">
                     <template #default="scope">
@@ -277,7 +277,6 @@
               </div>
             </template>
             <el-table :data="abnormalMovement925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
-                <el-table-column prop="code" label="代码" width="70" />
                 <el-table-column prop="name" label="名称" width="70" />
                 <el-table-column prop="change_percent" label="涨幅" width="60">
                     <template #default="scope">
@@ -300,7 +299,6 @@
               </div>
             </template>
             <el-table :data="limitDown925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
-                <el-table-column prop="code" label="代码" width="70" />
                 <el-table-column prop="name" label="名称" width="70" />
                 <el-table-column prop="change_percent" label="跌幅" width="60">
                     <template #default="scope">
@@ -314,6 +312,7 @@
                 </el-table-column>
             </el-table>
           </el-card>
+          </div>
         </div>
       </el-col>
     </el-row>
