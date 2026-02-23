@@ -247,6 +247,10 @@ class MarketService:
             for row in data:
                 if isinstance(row['date'], datetime.date):
                     row['date'] = row['date'].strftime('%Y-%m-%d')
+                
+                # Add is_20cm flag
+                code = row.get('code', '')
+                row['is_20cm'] = code.startswith('30') or code.startswith('688')
             
             CacheManager.set(cache_key, data, ttl=60) # Cache for 1 minute
             return data
@@ -362,7 +366,8 @@ class MarketService:
                     'first_limit_up_time': first_time,
                     'change_percent': auction.get('change_percent'),
                     'asking_amount': auction.get('asking_amount'),
-                    'bidding_amount': auction.get('bidding_amount')
+                    'bidding_amount': auction.get('bidding_amount'),
+                    'is_20cm': code.startswith('30') or code.startswith('688')
                 }
                 result.append(item)
             
