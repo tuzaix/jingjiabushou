@@ -246,16 +246,12 @@
             
             <!-- Index Data Card -->
             <div v-if="indexData && indexData.length > 0" class="market-overview-row" style="margin-top: 8px; display: flex; flex-direction: row; gap: 8px;">
-                <div v-for="idx in indexData" :key="idx.index_code" class="stat-card single-col" style="flex: 1; padding: 5px; text-align: center;">
-                    <div class="stat-header-mini center" style="margin-bottom: 5px;">
-                        <span class="stat-label">{{ idx.index_name }}</span>
-                    </div>
-                    <div class="stat-content-mini center">
-                        <div class="value-row" style="display: flex; justify-content: center; gap: 8px; align-items: baseline;">
-                            <span :class="getChangeClass(idx.increase_rate)" style="font-size: 14px; font-weight: bold;">{{ idx.increase_rate }}%</span>
-                            <span :class="getChangeClass(idx.increase_rate)" class="stat-value" style="font-size: 16px;">{{ idx.index_volume }}</span>
-                            <span :class="getChangeClass(idx.increase_rate)" style="font-size: 12px;">{{ idx.increase_amount }}</span>
-                        </div>
+                <div v-for="idx in indexData" :key="idx.index_code" class="stat-card single-col" style="flex: 1; padding: 0 10px; display: flex; align-items: center; justify-content: center;">
+                    <div class="stat-content-mini center" style="display: flex; flex-direction: row; gap: 20px; align-items: baseline; width: 100%; justify-content: center;">
+                        <span class="stat-label" style="font-weight: bold; font-size: 16px; white-space: nowrap;">{{ idx.index_name }}</span>
+                        <span :class="getChangeClass(idx.increase_rate)" style="font-size: 16px; font-weight: bold;">{{ idx.increase_rate }}%</span>
+                        <span :class="getChangeClass(idx.increase_rate)" class="stat-value" style="font-size: 16px;">{{ idx.index_volume }}</span>
+                        <span :class="getChangeClass(idx.increase_rate)" style="font-size: 14px;">{{ idx.increase_amount }}</span>
                     </div>
                 </div>
             </div>
