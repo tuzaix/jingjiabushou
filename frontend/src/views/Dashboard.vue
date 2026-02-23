@@ -266,7 +266,7 @@
                 <span>一字板</span>
               </div>
             </template>
-            <el-table class="no-scrollbar-table" :data="limitUp925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
+            <el-table class="no-scrollbar-table" :data="limitUp925List" style="width: 100%; flex: 1;" height="100%" stripe>
                 <el-table-column prop="name" label="名称" width="90" show-overflow-tooltip />
                 <el-table-column prop="change_percent" label="涨幅" width="75" align="center">
                     <template #default="scope">
@@ -289,7 +289,7 @@
                 <span>异动</span>
               </div>
             </template>
-            <el-table class="no-scrollbar-table" :data="abnormalMovement925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
+            <el-table class="no-scrollbar-table" :data="abnormalMovement925List" style="width: 100%; flex: 1;" height="100%" stripe>
                 <el-table-column prop="name" label="名称" width="90" show-overflow-tooltip />
                 <el-table-column prop="change_percent" label="涨幅" width="75" align="center">
                     <template #default="scope">
@@ -312,7 +312,7 @@
                 <span>核按钮</span>
               </div>
             </template>
-            <el-table class="no-scrollbar-table" :data="limitDown925List" style="width: 100%; flex: 1;" height="100%" stripe :header-cell-style="{background:'#f5f7fa'}">
+            <el-table class="no-scrollbar-table" :data="limitDown925List" style="width: 100%; flex: 1;" height="100%" stripe>
                 <el-table-column prop="name" label="名称" width="90" show-overflow-tooltip />
                 <el-table-column prop="change_percent" label="跌幅" width="75" align="center">
                     <template #default="scope">
@@ -1345,6 +1345,32 @@ onUnmounted(() => {
 /* Background Colors */
 .mixed-bg {
   background: linear-gradient(to right, var(--card-bg), var(--bg-color));
+}
+
+/* Table Theme Adaptation */
+:deep(.el-table) {
+  --el-table-bg-color: var(--card-bg);
+  --el-table-tr-bg-color: var(--card-bg);
+  --el-table-header-bg-color: var(--table-header-bg);
+  --el-table-row-hover-bg-color: var(--hover-bg);
+  --el-table-border-color: var(--border-color);
+  --el-table-text-color: var(--text-primary);
+  --el-table-header-text-color: var(--text-secondary);
+  /* Stripe color variable for Element Plus */
+  --el-fill-color-lighter: var(--bg-color);
+  background-color: var(--card-bg);
+}
+
+:deep(.el-table th.el-table__cell) {
+    background-color: var(--table-header-bg);
+}
+
+:deep(.el-table__body tr.el-table__row--striped td.el-table__cell) {
+  background: var(--bg-color);
+}
+
+:deep(.el-table tr) {
+  background-color: var(--card-bg);
 }
 
 .vol-bg {
