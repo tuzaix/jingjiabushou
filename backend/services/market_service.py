@@ -545,11 +545,14 @@ class MarketService:
             return []
 
     @staticmethod
-    def get_abnormal_movement_at_925(date_str=None, limit=20):
+    def get_abnormal_movement_at_925(date_str=None, limit=10):
         """
         Get 'Abnormal Movement' stocks at 9:25.
-        Defined as: High turnover (asking_amount) but NOT Limit Up and NOT Limit Down.
+        Defined as: Top 10 stocks with the highest price increase (bidding_percent) 
+        difference between 9:25 and 9:15 (upward trend).
         """
+        # Force limit to 10
+        limit = 10
         if not date_str:
             date_str = datetime.date.today().strftime('%Y-%m-%d')
             
@@ -559,32 +562,34 @@ class MarketService:
             return cached_data
 
         query = """
-        SELECT code, name, sector,
-               bidding_percent as change_percent, 
-               asking_amount as amount, 
-               0 as price, 
-               time, date
-        FROM call_auction_data 
-        WHERE date = %s 
-          AND time >= '09:25:00' AND time < '09:26:00' 
-          AND NOT (
-            (name LIKE '%%ST%%' AND (bidding_percent >= 4.9 OR bidding_percent <= -4.9))
-            OR
-            (name NOT LIKE '%%ST%%' AND (
-                ((code LIKE '30%%' OR code LIKE '688%%') AND (bidding_percent >= 19.8 OR bidding_percent <= -19.8))
-                OR
-                ((code LIKE '8%%' OR code LIKE '43%%' OR code LIKE '92%%') AND (bidding_percent >= 29.8 OR bidding_percent <= -29.8))
-                OR
-                (code NOT LIKE '30%%' AND code NOT LIKE '688%%' AND code NOT LIKE '8%%' AND code NOT LIKE '43%%' AND code NOT LIKE '92%%' AND (bidding_percent >= 9.8 OR bidding_percent <= -9.8))
-            ))
-          )
-        ORDER BY asking_amount DESC
-        LIMIT %s
+        SELECT 
+                t25.code, t25.name, t25.sector,
+                t25.bidding_percent as change_percent, 
+                (t25.bidding_percent - t15.bidding_percent) as amplitude,
+                t25.bidding_amount as amount, 
+                0 as price, 
+                t25.time, t25.date
+            FROM call_auction_data t25
+            JOIN (
+                SELECT code, MIN(time) as min_time
+                FROM call_auction_data
+                WHERE date = %s AND time >= '09:15:00' AND time <= '09:25:00'
+                GROUP BY code
+            ) t_min_info ON t25.code = t_min_info.code
+            JOIN call_auction_data t15 ON t25.code = t15.code AND t25.date = t15.date AND t_min_info.min_time = t15.time
+            WHERE t25.date = %s 
+              AND t25.time >= '09:25:00' AND t25.time < '09:26:00'
+              AND (t25.bidding_percent - t15.bidding_percent) >= 5
+              AND t25.bidding_amount >= 50000000
+            ORDER BY (t25.bidding_percent - t15.bidding_percent) DESC
+            LIMIT %s
         """
         try:
-            data = DatabaseManager.execute_query(query, (date_str, limit), dictionary=True)
+            data = DatabaseManager.execute_query(query, (date_str, date_str, limit), dictionary=True)
             
             for row in data:
+                if row.get('amplitude') is not None:
+                    row['amplitude'] = float(row['amplitude'])
                 if isinstance(row['date'], datetime.date):
                     row['date'] = row['date'].strftime('%Y-%m-%d')
                 if isinstance(row['time'], datetime.timedelta):

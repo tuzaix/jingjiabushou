@@ -71,7 +71,7 @@ def get_limit_down_925():
 @frontend_bp.route('/api/call_auction/abnormal_movement_925', methods=['GET'])
 def get_abnormal_movement_925():
     date_str = request.args.get('date')
-    limit = request.args.get('limit', 20, type=int)
+    limit = request.args.get('limit', 10, type=int)
     
     logger.debug(f"Querying Abnormal Movement at 9:25: date={date_str}, limit={limit}")
     data = MarketService.get_abnormal_movement_at_925(date_str=date_str, limit=limit)

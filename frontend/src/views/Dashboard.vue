@@ -310,7 +310,10 @@
                 <div v-for="item in abnormalMovement925List" :key="item.code" class="list-card" @mouseenter="hoveredCode = item.code" @mouseleave="hoveredCode = null" :class="{ 'is-hovered': hoveredCode === item.code }">
                     <div class="list-card-row">
                         <span class="list-card-name">{{ item.name }}</span>
-                        <span :class="getChangeClass(item.change_percent)" style="font-weight: bold;">{{ item.change_percent }}%</span>
+                        <div style="display: flex; gap: 8px; align-items: baseline;">
+                            <span :class="getChangeClass(item.amplitude)" style="font-size: 12px;">+{{ formatPercent(item.amplitude) }}%</span>
+                            <span :class="getChangeClass(item.change_percent)" style="font-weight: bold;">{{ item.change_percent }}%</span>
+                        </div>
                     </div>
                     <div class="list-card-row">
                         <span class="list-card-amount">成交: {{ formatAmount(item.amount) }}</span>
@@ -774,6 +777,12 @@ const formatAmount = (val) => {
   return (num / 10000).toFixed(0) + '万'
 }
 
+const formatPercent = (val) => {
+  if (val === null || val === undefined) return '0.00'
+  const num = Number(val)
+  return isNaN(num) ? '0.00' : num.toFixed(2)
+}
+
 import { store } from '../store/dashboard.js'
 
 const selectedDate = computed({
@@ -934,7 +943,7 @@ const fetchAbnormalMovement925 = async () => {
     const response = await axios.get('/api/call_auction/abnormal_movement_925', {
       params: { 
         date: selectedDate.value,
-        limit: 50 
+        limit: 10 
       }
     })
     abnormalMovement925List.value = response.data
