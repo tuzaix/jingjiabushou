@@ -14,37 +14,66 @@ logger = logging.getLogger(__name__)
 class SyncService:
     @staticmethod
     def update_all_stock_codes():
+        """
+        根据管理后台配置中的“东方财富实时竞价”配置，解析 body 字段中的 secids 列表来更新股票列表。
+        """
         try:
-            with akshare_lock:
-                import akshare as ak
-                stock_zh_a_spot_em_df = ak.stock_zh_a_spot_em()
+            config = EastmoneyService.get_config()
+            if not config:
+                logger.error("No Eastmoney configuration found.")
+                return []
             
-            # Filter out ST, Delisted, and New Third Board/Beijing stocks
-            # 1. Remove ST and Delisted based on name
-            mask_valid_name = ~stock_zh_a_spot_em_df['名称'].str.contains('ST|退')
+            body_obj = config.get('body')
+            secids = None
             
-            # 2. Keep only Main Board (00, 60), ChiNext (30), STAR Market (68)
-            # Exclude Beijing (8, 4, 92) and B-shares (900, 200)
-            mask_valid_code = stock_zh_a_spot_em_df['代码'].str.match('^(00|30|60|68)')
+            if isinstance(body_obj, dict):
+                secids = body_obj.get('secids')
+            elif isinstance(body_obj, str):
+                if 'secids=' in body_obj:
+                    from urllib.parse import parse_qs
+                    parsed = parse_qs(body_obj)
+                    if 'secids' in parsed:
+                        secids = parsed['secids'][0]
+                elif ',' in body_obj:
+                    # Possibly just a comma-separated list
+                    secids = body_obj
             
-            filtered_df = stock_zh_a_spot_em_df[mask_valid_name & mask_valid_code]
-            
-            codes = filtered_df['代码'].tolist()
-            names = filtered_df['名称'].tolist()
-            
-            DatabaseManager.execute_update("TRUNCATE TABLE stock_list")
-            
-            insert_query = "INSERT INTO stock_list (code, name, market) VALUES (%s, %s, %s)"
-            data = []
-            for code, name in zip(codes, names):
-                market = 1 if code.startswith('6') else 0 
-                data.append((code, name, market))
+            if not secids:
+                logger.error("No secids found in Eastmoney configuration body.")
+                return []
                 
+            if isinstance(secids, str):
+                secids = secids.split(',')
+            
+            # Prepare data for stock_list
+            data = []
+            seen_codes = set()
+            for secid in secids:
+                # secid format: "0.000001" or "1.600000"
+                parts = secid.strip().split('.')
+                if len(parts) == 2:
+                    _, stock_code = parts
+                    if stock_code not in seen_codes:
+                        # market = 1 if code starts with 6 (Shanghai), else 0
+                        market = 1 if stock_code.startswith('6') else 0
+                        # 使用 stock_code 作为 name (忽略股票名字)
+                        data.append((stock_code, stock_code, market))
+                        seen_codes.add(stock_code)
+            
+            if not data:
+                logger.error("No valid stock codes parsed from secids.")
+                return []
+            
+            # Update database
+            DatabaseManager.execute_update("TRUNCATE TABLE stock_list")
+            insert_query = "INSERT INTO stock_list (code, name, market) VALUES (%s, %s, %s)"
             count = DatabaseManager.execute_update(insert_query, data, many=True)
-            logger.info(f"Updated stock list with {count} stocks (Filtered ST, Delisted, and non-A-share).")
+            
+            logger.info(f"Updated stock list with {count} stocks from configuration secids.")
             return data
+            
         except Exception as e:
-            logger.error(f"Error fetching stock list: {e}")
+            logger.error(f"Error updating stock codes from configuration: {e}")
             return []
 
     @staticmethod

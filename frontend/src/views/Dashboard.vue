@@ -72,8 +72,13 @@
                         :class="{ 'is-hovered': hoveredCode === item.code }"
                         @mouseenter="handleMouseEnter(item.code)" 
                         @mouseleave="handleMouseLeave">
-                     <div class="mini-row" style="margin-bottom: 0;">
-                         <span class="mini-name">{{ item.name }}</span>
+                     <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                        <div class="mini-row" style="margin-bottom: 2px;">
+                            <span class="mini-name">{{ item.name }}</span>
+                        </div>
+                        <div class="mini-row" style="margin-bottom: 0;">
+                            <span class="stock-info amount" style="font-size: 12px; margin: 0;">{{ formatAmount(item.amount) }}</span>
+                        </div>
                      </div>
                   </div>
                   <div v-if="ranking920List.length === 0" class="no-data">暂无数据</div>
@@ -89,8 +94,13 @@
                          :class="{ 'is-hovered': hoveredCode === item.code }"
                          @mouseenter="handleMouseEnter(item.code)" 
                          @mouseleave="handleMouseLeave">
-                      <div class="mini-row" style="margin-bottom: 0;">
-                          <span class="mini-name">{{ item.name }}</span>
+                      <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                         <div class="mini-row" style="margin-bottom: 2px;">
+                             <span class="mini-name">{{ item.name }}</span>
+                         </div>
+                         <div class="mini-row" style="margin-bottom: 0;">
+                             <span class="stock-info amount" style="font-size: 12px; margin: 0;">{{ formatAmount(item.amount) }}</span>
+                         </div>
                       </div>
                    </div>
                    <div v-if="ranking915List.length === 0" class="no-data">暂无数据</div>
