@@ -303,7 +303,7 @@
           <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
             <template #header>
               <div class="card-header">
-                <span>异动</span>
+                <span>弱转强</span>
               </div>
             </template>
             <div class="card-list-container">
