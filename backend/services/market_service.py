@@ -182,13 +182,18 @@ class MarketService:
 
         try:
             query = """
-            SELECT code, name, sector, 
-                   bidding_percent as change_percent, 
-                   asking_amount as amount, 
-                   time
-            FROM call_auction_data 
-            WHERE date = %s AND time >= %s AND time < %s
-            ORDER BY asking_amount DESC LIMIT %s
+            SELECT t1.code, t1.name, t1.sector, 
+                   t1.bidding_percent as change_percent, 
+                   t1.asking_amount as amount, 
+                   t1.time
+            FROM call_auction_data t1
+            JOIN (
+                SELECT date, code, MIN(time) as min_time
+                FROM call_auction_data
+                WHERE date = %s AND time >= %s AND time < %s
+                GROUP BY date, code
+            ) t2 ON t1.date = t2.date AND t1.code = t2.code AND t1.time = t2.min_time
+            ORDER BY t1.asking_amount DESC LIMIT %s
             """
             
             data = DatabaseManager.execute_query(query, (date_str, start_time, end_time, limit), dictionary=True)
