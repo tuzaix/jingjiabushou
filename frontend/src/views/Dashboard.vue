@@ -819,18 +819,32 @@ watch(() => store.refreshInterval, () => {
 })
 
 let timer = null
+const isRefreshing = ref(false)
+
+const refreshAll = async () => {
+  if (isRefreshing.value) return
+  isRefreshing.value = true
+  
+  try {
+    // Concurrent fetch using Promise.allSettled
+    await Promise.allSettled([
+      fetchTopN(),
+      fetchYesterdayLimitUp(),
+      fetchLimitUp925(),
+      fetchAbnormalMovement925(),
+      fetchLimitDown925(),
+      fetchMarketSentiment(),
+      fetchIndexData()
+    ])
+  } finally {
+      isRefreshing.value = false
+    }
+}
 
 const startTimer = () => {
   if (timer) clearInterval(timer)
   if (autoRefresh.value) {
-    timer = setInterval(() => {
-      fetchTopN()
-      fetchLimitUp925()
-      fetchAbnormalMovement925()
-      fetchLimitDown925()
-      fetchMarketSentiment()
-      // Optional: fetchYesterdayLimitUp usually doesn't change often, but can be added if needed
-    }, refreshInterval.value)
+    timer = setInterval(refreshAll, refreshInterval.value)
   }
 }
 
@@ -882,45 +896,30 @@ const getTodayStr = () => {
 
 const fetchTopN = async () => {
   try {
-    const response = await axios.get('/api/call_auction/top_n', {
-      params: { 
-        limit: 50,
-        date: selectedDate.value
-      }
-    })
-    topNList.value = response.data
-    
-    // Also fetch rankings for 9:20 and 9:15
-    await fetchRankings()
-    
+    const [resTopN] = await Promise.all([
+      axios.get('/api/call_auction/top_n', {
+        params: { limit: 50, date: selectedDate.value }
+      }),
+      fetchRankings() // Parallelize with top N call
+    ])
+    topNList.value = resTopN.data
   } catch (error) {
-    console.error('Error fetching top N:', error)
+    console.error('Error fetching top N data:', error)
   }
 }
 
 const fetchRankings = async () => {
   try {
     const dateStr = selectedDate.value
-    // 9:20 - 9:21
-    const res920 = await axios.get('/api/call_auction/ranking', {
-        params: { 
-            start_time: '09:20:00', 
-            end_time: '09:21:00', 
-            limit: 50, 
-            date: dateStr 
-        }
-    })
+    const [res920, res915] = await Promise.all([
+      axios.get('/api/call_auction/ranking', {
+        params: { start_time: '09:20:00', end_time: '09:21:00', limit: 50, date: dateStr }
+      }),
+      axios.get('/api/call_auction/ranking', {
+        params: { start_time: '09:15:00', end_time: '09:16:00', limit: 50, date: dateStr }
+      })
+    ])
     ranking920List.value = res920.data
-    
-    // 9:15 - 9:16
-    const res915 = await axios.get('/api/call_auction/ranking', {
-        params: { 
-            start_time: '09:15:00', 
-            end_time: '09:16:00', 
-            limit: 50, 
-            date: dateStr 
-        }
-    })
     ranking915List.value = res915.data
   } catch (error) {
     console.error('Error fetching rankings:', error)
@@ -994,16 +993,6 @@ const fetchYesterdayLimitUp = async () => {
   } catch (error) {
     console.error('Error fetching yesterday limit up:', error)
   }
-}
-
-const refreshAll = () => {
-  fetchTopN()
-  fetchYesterdayLimitUp()
-  fetchLimitUp925()
-  fetchAbnormalMovement925()
-  fetchLimitDown925()
-  fetchMarketSentiment()
-  fetchIndexData()
 }
 
 onMounted(async () => {
