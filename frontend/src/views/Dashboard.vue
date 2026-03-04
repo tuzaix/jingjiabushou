@@ -311,8 +311,8 @@
                     <div class="list-card-row">
                         <span class="list-card-name">{{ item.name }}</span>
                         <div style="display: flex; gap: 8px; align-items: baseline;">
-                            <span :class="getChangeClass(item.amplitude)" style="font-size: 12px;">+{{ formatPercent(item.amplitude) }}%</span>
-                            <span :class="getChangeClass(item.change_percent)" style="font-weight: bold;">{{ item.change_percent }}%</span>
+                            <span :class="getChangeClass(item.amplitude)" style="font-size: 13px; font-weight: 600;">拉:{{ formatPercent(item.amplitude) }}%</span>
+                            <span :class="getChangeClass(item.change_percent)" style="font-weight: bold; font-size: 16px;">{{ item.change_percent }}%</span>
                         </div>
                     </div>
                     <div class="list-card-row">
@@ -1403,17 +1403,17 @@ onUnmounted(() => {
 
 .list-card-name {
   font-weight: bold;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--text-primary);
 }
 
 .list-card-amount {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
 }
 
 .list-card-sector {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-primary);
   background-color: var(--bg-color);
   padding: 2px 6px;
