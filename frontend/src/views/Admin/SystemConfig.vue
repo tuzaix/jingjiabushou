@@ -49,6 +49,7 @@
             />
           </div>
         </el-card>
+
       </el-tab-pane>
 
       <el-tab-pane label="东方财富" name="eastmoney">
@@ -99,6 +100,7 @@
             />
           </div>
         </el-card>
+
       </el-tab-pane>
 
       <el-tab-pane label="开盘啦" name="kaipanla">
@@ -245,6 +247,54 @@
             />
           </div>
         </el-card>
+
+        <el-card class="box-card" style="margin-top: 20px;">
+          <template #header>
+            <div class="card-header">
+              <span>获取【开盘啦涨跌幅统计】数据，定期更新cURL，测试后保存生效。</span>
+            </div>
+          </template>
+          
+          <div class="config-section">
+            <el-alert
+              title="说明：请从浏览器开发者工具中复制【涨跌幅统计】相关请求的 cURL (bash) 命令，粘贴到下方文本框中。系统将自动提取 URL、Headers 和 Body 信息。"
+              type="info"
+              show-icon
+              :closable="false"
+              style="margin-bottom: 20px;"
+            />
+            
+            <el-form label-position="top">
+              <el-form-item label="cURL 命令">
+                <el-input
+                  v-model="kaipanlaStatCurlCommand"
+                  type="textarea"
+                  :rows="10"
+                  placeholder="请粘贴 curl 'https://...' ..."
+                />
+              </el-form-item>
+              
+              <el-form-item>
+                <el-button type="primary" @click="saveKaipanlaStatConfig" :loading="kaipanlaStatSaving">保存配置</el-button>
+                <el-button type="success" @click="testKaipanlaStatFetch" :loading="kaipanlaStatTesting">测试抓取</el-button>
+              </el-form-item>
+            </el-form>
+          </div>
+
+          <div v-if="kaipanlaStatTestResult" class="result-section">
+            <div class="result-header">
+              <span>测试结果</span>
+              <el-tag :type="kaipanlaStatTestSuccess ? 'success' : 'danger'">{{ kaipanlaStatTestSuccess ? '成功' : '失败' }}</el-tag>
+            </div>
+            <el-input
+              v-model="kaipanlaStatTestResultStr"
+              type="textarea"
+              :rows="15"
+              readonly
+              class="result-textarea"
+            />
+          </div>
+        </el-card>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -325,6 +375,20 @@ const kaipanlaIndexTestResultStr = computed(() => {
   return typeof kaipanlaIndexTestResult.value === 'string' 
     ? kaipanlaIndexTestResult.value 
     : JSON.stringify(kaipanlaIndexTestResult.value, null, 2)
+})
+
+// Kaipanla Stat Variables
+const kaipanlaStatCurlCommand = ref('')
+const kaipanlaStatSaving = ref(false)
+const kaipanlaStatTesting = ref(false)
+const kaipanlaStatTestResult = ref(null)
+const kaipanlaStatTestSuccess = ref(false)
+
+const kaipanlaStatTestResultStr = computed(() => {
+  if (!kaipanlaStatTestResult.value) return ''
+  return typeof kaipanlaStatTestResult.value === 'string' 
+    ? kaipanlaStatTestResult.value 
+    : JSON.stringify(kaipanlaStatTestResult.value, null, 2)
 })
 
 // Jiuyan Methods
@@ -542,6 +606,49 @@ const testKaipanlaIndexFetch = async () => {
   }
 }
 
+// Kaipanla Stat Methods
+const saveKaipanlaStatConfig = async () => {
+  if (!kaipanlaStatCurlCommand.value) {
+    ElMessage.warning('请输入 cURL 命令')
+    return
+  }
+  
+  kaipanlaStatSaving.value = true
+  try {
+    const response = await axios.post('/api/admin/kaipanla/stat/config', {
+      curl: kaipanlaStatCurlCommand.value
+    })
+    ElMessage.success(response.data.message || '配置保存成功')
+  } catch (error) {
+    ElMessage.error(error.response?.data?.error || '保存失败')
+  } finally {
+    kaipanlaStatSaving.value = false
+  }
+}
+
+const testKaipanlaStatFetch = async () => {
+  kaipanlaStatTesting.value = true
+  kaipanlaStatTestResult.value = null
+  kaipanlaStatTestSuccess.value = false
+  
+  try {
+    const response = await axios.post('/api/admin/kaipanla/stat/test')
+    kaipanlaStatTestResult.value = response.data
+    kaipanlaStatTestSuccess.value = response.data.success
+    if (response.data.success) {
+      ElMessage.success('测试成功')
+    } else {
+      ElMessage.warning('测试完成但返回失败状态')
+    }
+  } catch (error) {
+    console.error('Test failed:', error)
+    kaipanlaStatTestResult.value = error.response?.data || error.message
+    ElMessage.error('测试请求失败')
+  } finally {
+    kaipanlaStatTesting.value = false
+  }
+}
+
 // Fetch configs on mount
 const fetchConfigs = async () => {
   try {
@@ -587,6 +694,15 @@ const fetchConfigs = async () => {
     }
   } catch (error) {
     console.error('Error fetching Kaipanla Index config:', error)
+  }
+
+  try {
+    const kaipanlaStatRes = await axios.get('/api/admin/kaipanla/stat/config')
+    if (kaipanlaStatRes.data && kaipanlaStatRes.data.curl) {
+      kaipanlaStatCurlCommand.value = kaipanlaStatRes.data.curl
+    }
+  } catch (error) {
+    console.error('Error fetching Kaipanla Stat config:', error)
   }
 }
 

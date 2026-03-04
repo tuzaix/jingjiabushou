@@ -188,6 +188,34 @@ def kaipanla_index_test():
     else:
         return jsonify({"success": False, "error": result}), 500
 
+@admin_bp.route('/api/admin/kaipanla/stat/config', methods=['GET', 'POST'])
+def kaipanla_stat_config():
+    if request.method == 'GET':
+        config = KaipanlaService.get_stat_config()
+        return jsonify(config or {})
+    else:
+        data = request.get_json()
+        curl_command = data.get('curl')
+        if not curl_command:
+            return jsonify({"error": "Missing curl command"}), 400
+            
+        success, message = KaipanlaService.update_stat_config(curl_command)
+        if success:
+            return jsonify({"message": message})
+        else:
+            return jsonify({"error": message}), 500
+
+@admin_bp.route('/api/admin/kaipanla/stat/test', methods=['POST'])
+def kaipanla_stat_test():
+    """
+    Test fetching statistics data from Kaipanla using the configured cURL command.
+    """
+    success, result = KaipanlaService.fetch_stat_data()
+    if success:
+        return jsonify({"success": True, "data": result})
+    else:
+        return jsonify({"success": False, "error": result}), 500
+
 # Manual trigger for testing
 @admin_bp.route('/api/test/fetch_call_auction', methods=['POST'])
 def trigger_fetch():
