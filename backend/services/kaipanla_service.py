@@ -198,10 +198,86 @@ class KaipanlaService(BaseCurlService):
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
             
-            count = DatabaseManager.execute_update(insert_sql, values_to_insert, many=True)
-            logger.info(f"Saved {count} index records.")
-            return True, f"Saved {count} records"
+            DatabaseManager.execute_batch(insert_sql, values_to_insert)
+            logger.info(f"Successfully saved {len(values_to_insert)} index data items for {date_str} at {time_str}")
+            return True, f"Saved {len(values_to_insert)} items"
 
         except Exception as e:
             logger.error(f"Error saving index data: {e}")
+            return False, str(e)
+
+    @staticmethod
+    def save_stat_data(date_str=None):
+        """
+        Fetches statistics data and saves it to the database.
+        """
+        success, result = KaipanlaService.fetch_stat_data()
+        if not success:
+            logger.error(f"Failed to fetch statistics data: {result}")
+            return False, result
+
+        try:
+            # Result could be a dict (parsed JSON) or string
+            data = None
+            if isinstance(result, (dict, list)):
+                data = result
+            else:
+                try:
+                    data = json.loads(result)
+                except json.JSONDecodeError:
+                    logger.warning(f"Could not parse response as JSON: {result[:100]}...")
+                    return False, "Invalid JSON response"
+
+            info = data.get('list', {})
+            if not info:
+                logger.warning(f"No 'list' field in data for {date_str}, skipping save.")
+                return False, "No list field"
+
+            if not date_str:
+                date_str = datetime.date.today().strftime('%Y-%m-%d')
+
+            current_time = datetime.datetime.now()
+            # 如果current_time小于9:15则time_str等于09:15:00, 如果大于15点，则time_str=15:00:00，否则就是用当前时间
+            if current_time < datetime.datetime.now().replace(hour=9, minute=15, second=0):
+                time_str = '09:15:00'
+            elif current_time > datetime.datetime.now().replace(hour=15, minute=0, second=0):
+                time_str = '15:00:00'
+            else:
+                time_str = current_time.strftime('%H:%M:%S')
+
+            # Extract fields (reference from fetch_limit_up_stats.py)
+            limit_up_count = int(info.get('ZT', 0))
+            limit_down_count = int(info.get('DT', 0))
+            non_st_limit_up_count = int(info.get('ZTJS', 0))
+            non_st_limit_down_count = int(info.get('DTJS', 0))
+            st_limit_up_count = int(info.get('STZT', 0))
+            st_limit_down_count = int(info.get('STDT', 0))
+            rise_count = int(info.get('SZJS', 0))
+            fall_count = int(info.get('XDJS', 0))
+            flat_count = int(info.get('0', 0))
+            market_sentiment = info.get('sign', '')
+            shanghai_turnover = int(info.get('szln', 0))
+            total_turnover = int(info.get('qscln', 0))
+            rise_fall_distribution = info.get('ZSZDFB', '')
+
+            query = """
+            REPLACE INTO market_sentiment_stats 
+            (date, time, limit_up_count, limit_down_count, non_st_limit_up_count, non_st_limit_down_count, 
+             st_limit_up_count, st_limit_down_count, rise_count, fall_count, flat_count, 
+             market_sentiment, shanghai_turnover, total_turnover, rise_fall_distribution, raw_response_json)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            
+            params = (
+                date_str, time_str, limit_up_count, limit_down_count, non_st_limit_up_count, non_st_limit_down_count,
+                st_limit_up_count, st_limit_down_count, rise_count, fall_count, flat_count, 
+                market_sentiment, shanghai_turnover, total_turnover, rise_fall_distribution, json.dumps(data)
+            )
+            
+            DatabaseManager.execute_update(query, params)
+            logger.info(f"Successfully saved market stats for date: {date_str} time: {time_str}")
+            return True, f"Saved stats for {date_str} {time_str}"
+
+        except Exception as e:
+            logger.error(f"Error saving statistics data: {e}")
             return False, str(e)

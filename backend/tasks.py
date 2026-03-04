@@ -53,6 +53,17 @@ def run_fetch_index_data(date_str=None):
         logger.error(f"Task failed: run_fetch_index_data. Error: {e}")
         return False
 
+def run_fetch_stat_data(date_str=None):
+    """Fetch statistics data (market sentiment) using KaipanlaService."""
+    logger.info(f"Task started: run_fetch_stat_data (date={date_str})")
+    try:
+        success, msg = KaipanlaService.save_stat_data(date_str)
+        logger.info(f"Task completed: run_fetch_stat_data. {msg}")
+        return success
+    except Exception as e:
+        logger.error(f"Task failed: run_fetch_stat_data. Error: {e}")
+        return False
+
 if __name__ == "__main__":
     # Test run
     # run_update_stock_list()
@@ -61,5 +72,6 @@ if __name__ == "__main__":
     #JiuyanService.sync_data('2026-02-13')
     # run_update_call_auction_data(date_str='2026-03-04')
     # run_update_yesterday_limit_up(date_str='2026-03-04')
-    run_fetch_index_data('2026-03-04')
+    # run_fetch_index_data('2026-03-04')
+    run_fetch_stat_data('2026-03-04')
     pass
