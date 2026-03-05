@@ -651,24 +651,15 @@ class MarketService:
             if not d_str:
                 return None
             
-            # Query market_sentiment_stats
-            # Prefer 9:25 data if available, otherwise latest
-            query_stats = """
-            SELECT non_st_limit_up_count, non_st_limit_down_count, rise_count, fall_count
+            # 1. Try to get 9:25:00 data (Opening Auction Sentiment)
+            query_stats_925 = """
+            SELECT non_st_limit_up_count, non_st_limit_down_count, rise_count, fall_count, total_turnover
             FROM market_sentiment_stats
-            WHERE date = %s
-            ORDER BY time ASC
+            WHERE date = %s AND time >= '09:25:00' AND time < '09:26:00'
+            ORDER BY time DESC
             LIMIT 1
             """
-            stats = DatabaseManager.execute_query(query_stats, (d_str,), dictionary=True)
-            
-            # Query market_capacity for volume (9:25 Call Auction Amount)
-            query_cap = """
-            SELECT call_auction_amount
-            FROM market_capacity
-            WHERE date = %s
-            """
-            cap = DatabaseManager.execute_query(query_cap, (d_str,), dictionary=True)
+            stats = DatabaseManager.execute_query(query_stats_925, (d_str,), dictionary=True)
             
             limit_up = 0
             limit_down = 0
@@ -682,12 +673,11 @@ class MarketService:
                 limit_down = int(row.get('non_st_limit_down_count') or 0)
                 rise = int(row.get('rise_count') or 0)
                 fall = int(row.get('fall_count') or 0)
+                # total_turnover from stats is the market turnover at that time (Wan)
+                # If we are targeting 9:25, this is the 9:25 volume
+                if row.get('total_turnover'):
+                    vol = float(row.get('total_turnover')) * 10000
                 
-            if cap:
-                # call_auction_amount is likely in 'Wan' (10k), convert to raw
-                raw_amount = float(cap[0].get('call_auction_amount') or 0)
-                vol = raw_amount * 10000
-            
             return {
                 'limit_up': limit_up,
                 'limit_down': limit_down,
