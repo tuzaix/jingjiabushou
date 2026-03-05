@@ -61,3 +61,10 @@ class DatabaseManager:
             else:
                 cursor.execute(query, params or ())
             return cursor.rowcount
+
+    @staticmethod
+    def execute_batch(query, params_list):
+        """
+        Execute many INSERT/UPDATE/DELETE queries at once.
+        """
+        return DatabaseManager.execute_update(query, params_list, many=True)

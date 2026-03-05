@@ -72,6 +72,6 @@ if __name__ == "__main__":
     #JiuyanService.sync_data('2026-02-13')
     # run_update_call_auction_data(date_str='2026-03-04')
     # run_update_yesterday_limit_up(date_str='2026-03-04')
-    # run_fetch_index_data('2026-03-04')
-    run_fetch_stat_data('2026-03-04')
+    # run_fetch_index_data('2026-03-05')
+    run_fetch_stat_data('2026-03-05')
     pass
