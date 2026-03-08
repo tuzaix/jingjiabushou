@@ -31,7 +31,7 @@ class MarketService:
             query_top_n = """
             SELECT t1.code, t1.name, t1.sector, 
                    t1.bidding_percent as change_percent, 
-                   t1.asking_amount as amount, 
+                   (t1.bidding_amount + t1.asking_amount) as amount, 
                    t1.time, t1.date
             FROM call_auction_data t1
             JOIN (
@@ -48,7 +48,7 @@ class MarketService:
                   ((t1.code LIKE '8%%' OR t1.code LIKE '4%%' OR t1.code LIKE '9%%') AND t1.bidding_percent <= -29.0) OR
                   (t1.name NOT LIKE '%%ST%%' AND t1.code NOT LIKE '30%%' AND t1.code NOT LIKE '688%%' AND t1.code NOT LIKE '8%%' AND t1.code NOT LIKE '4%%' AND t1.code NOT LIKE '9%%' AND t1.bidding_percent <= -9.0)
               )
-            ORDER BY t1.non_asking_amount DESC LIMIT %s
+            ORDER BY (t1.bidding_amount + t1.asking_amount) DESC LIMIT %s
             """
             
             top_n_data = DatabaseManager.execute_query(query_top_n, (date_str, date_str, limit), dictionary=True)
@@ -63,7 +63,7 @@ class MarketService:
             # 2. Fetch data for these codes at 9:20 and 9:15 (latest tick only)
             format_strings = ','.join(['%s'] * len(codes))
             query_history = f"""
-            SELECT t1.code, t1.time, t1.asking_amount as amount
+            SELECT t1.code, t1.time, (t1.bidding_amount + t1.asking_amount) as amount
             FROM call_auction_data t1
             JOIN (
                 SELECT code,
@@ -184,7 +184,7 @@ class MarketService:
             query = """
             SELECT t1.code, t1.name, t1.sector, 
                    t1.bidding_percent as change_percent, 
-                   t1.asking_amount as amount, 
+                   (t1.bidding_amount + t1.asking_amount) as amount, 
                    t1.time
             FROM call_auction_data t1
             JOIN (
@@ -193,7 +193,7 @@ class MarketService:
                 WHERE date = %s AND time >= %s AND time < %s
                 GROUP BY date, code
             ) t2 ON t1.date = t2.date AND t1.code = t2.code AND t1.time = t2.min_time
-            ORDER BY t1.asking_amount DESC LIMIT %s
+            ORDER BY (t1.bidding_amount + t1.asking_amount) DESC LIMIT %s
             """
             
             data = DatabaseManager.execute_query(query, (date_str, start_time, end_time, limit), dictionary=True)
