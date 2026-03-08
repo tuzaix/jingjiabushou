@@ -151,7 +151,7 @@
                                    / {{ formatAmount(item.asking_amount) }}
                                  </template>
                                </span>
-                               <span class="stock-info sector-tag-mini" v-if="item.sector">{{ item.sector }}</span>
+                               <span v-for="sec in getSortedSectors(item.sector).slice(0, 1)" :key="sec" class="stock-tag" :style="getHeatStyle(sec)">{{ sec }}</span>
                            </div>
                        </div>
                     </div>
@@ -177,9 +177,9 @@
                 <div v-for="idx in indexData" :key="idx.index_code" class="stat-card index-stat-card">
                     <div class="index-stat-content">
                         <span class="index-stat-label">{{ idx.index_name }}</span>
-                        <span :class="getChangeClass(idx.increase_rate)" class="index-stat-value">{{ idx.increase_rate }}%</span>
+                        <span :class="getChangeClass(idx.increase_rate)" class="index-stat-value">{{ formatIndexRate(idx.increase_rate) }}</span>
                         <span :class="getChangeClass(idx.increase_rate)" class="index-stat-value">{{ idx.index_volume }}</span>
-                        <span :class="getChangeClass(idx.increase_rate)" class="index-stat-amount">{{ idx.increase_amount }}</span>
+                        <span :class="getChangeClass(idx.increase_rate)" class="index-stat-amount">{{ formatIndexAmount(idx.increase_amount) }}</span>
                     </div>
                 </div>
             </div>
@@ -295,7 +295,7 @@
                     </div>
                     <div class="list-card-row">
                         <span class="list-card-amount">封单: {{ formatAmount(item.amount) }}</span>
-                        <span class="list-card-sector" v-if="item.sector">{{ item.sector }}</span>
+                        <span v-for="sec in getSortedSectors(item.sector).slice(0, 1)" :key="sec" class="stock-tag" :style="getHeatStyle(sec)">{{ sec }}</span>
                     </div>
                 </div>
             </div>
@@ -319,7 +319,7 @@
                     </div>
                     <div class="list-card-row">
                         <span class="list-card-amount">成交: {{ formatAmount(item.amount) }}</span>
-                        <span class="list-card-sector" v-if="item.sector">{{ item.sector }}</span>
+                        <span v-for="sec in getSortedSectors(item.sector).slice(0, 1)" :key="sec" class="stock-tag" :style="getHeatStyle(sec)">{{ sec }}</span>
                     </div>
                 </div>
             </div>
@@ -340,7 +340,7 @@
                     </div>
                     <div class="list-card-row">
                         <span class="list-card-amount">封单: {{ formatAmount(item.amount) }}</span>
-                        <span class="list-card-sector" v-if="item.sector">{{ item.sector }}</span>
+                        <span v-for="sec in getSortedSectors(item.sector).slice(0, 1)" :key="sec" class="stock-tag" :style="getHeatStyle(sec)">{{ sec }}</span>
                     </div>
                 </div>
             </div>
@@ -371,7 +371,19 @@ const SECTOR_COLOR_PALETTE = [
   { solid: '#db2777', light: '#fdf2f8', text: '#db2777', border: '#fce7f3' }, // Rose
   { solid: '#ca8a04', light: '#fefce8', text: '#ca8a04', border: '#fef9c3' }, // Yellow-Dark
   { solid: '#4f46e5', light: '#eef2ff', text: '#4f46e5', border: '#e0e7ff' }, // Indigo
-  { solid: '#be123c', light: '#fff1f2', text: '#be123c', border: '#ffe4e6' }  // Rose-Dark
+  { solid: '#be123c', light: '#fff1f2', text: '#be123c', border: '#ffe4e6' }, // Rose-Dark
+  { solid: '#0ea5e9', light: '#f0f9ff', text: '#0ea5e9', border: '#e0f2fe' }, // Sky
+  { solid: '#10b981', light: '#ecfdf5', text: '#10b981', border: '#d1fae5' }, // Emerald-2
+  { solid: '#f59e0b', light: '#fffbeb', text: '#f59e0b', border: '#fef3c7' }, // Amber
+  { solid: '#6366f1', light: '#eef2ff', text: '#6366f1', border: '#e0e7ff' }, // Indigo-2
+  { solid: '#8b5cf6', light: '#f5f3ff', text: '#8b5cf6', border: '#ede9fe' }, // Violet
+  { solid: '#ec4899', light: '#fdf2f8', text: '#ec4899', border: '#fce7f3' }, // Pink-2
+  { solid: '#f43f5e', light: '#fff1f2', text: '#f43f5e', border: '#ffe4e6' }, // Rose-2
+  { solid: '#14b8a6', light: '#f0fdfa', text: '#14b8a6', border: '#ccfbf1' }, // Teal
+  { solid: '#f97316', light: '#fff7ed', text: '#f97316', border: '#ffedd5' }, // Orange-2
+  { solid: '#84cc16', light: '#f7fee7', text: '#84cc16', border: '#ecfccb' }, // Lime
+  { solid: '#a855f7', light: '#faf5ff', text: '#a855f7', border: '#f3e8ff' }, // Purple-2
+  { solid: '#ef4444', light: '#fef2f2', text: '#ef4444', border: '#fee2e2' }  // Red-2
 ]
 
 // --- State: Data ---
@@ -585,10 +597,15 @@ const getHeatStyle = (sectorName) => {
   const count = sectorFrequency.value[sectorName] || 0
   if (count <= 1) return { backgroundColor: '#f4f4f5', color: '#909399', border: '1px solid #e9e9eb' }
   
+  // Use a more robust hash function for better distribution
   let hash = 0
   for (let i = 0; i < sectorName.length; i++) {
-    hash = sectorName.charCodeAt(i) + ((hash << 5) - hash)
+    hash = (hash << 5) - hash + sectorName.charCodeAt(i)
+    hash |= 0 // Convert to 32bit integer
   }
+  
+  // Mix in the length to further differentiate similar strings
+  hash ^= sectorName.length * 31
   
   const colorSet = SECTOR_COLOR_PALETTE[Math.abs(hash) % SECTOR_COLOR_PALETTE.length]
   const isHighHeat = count >= 3
@@ -639,6 +656,20 @@ const getChangeClass = (val) => {
   if (val > 0) return 'text-red'
   if (val < 0) return 'text-green'
   return ''
+}
+
+const formatIndexRate = (val) => {
+  if (val === undefined || val === null || val === '') return '-'
+  const num = parseFloat(val)
+  if (isNaN(num)) return val
+  return num > 0 ? `+${num}%` : `${num}%`
+}
+
+const formatIndexAmount = (val) => {
+  if (val === undefined || val === null || val === '') return '-'
+  const num = parseFloat(val)
+  if (isNaN(num)) return val
+  return num > 0 ? `+${num}` : `${num}`
 }
 
 const formatAmount = (val) => {
@@ -1023,9 +1054,6 @@ onUnmounted(() => {
   font-size: 16px;
   font-weight: bold;
 }
-.stock-card .stock-tag {
-  font-size: 14px;
-}
 
 .edition-badge {
   position: absolute;
@@ -1229,19 +1257,6 @@ onUnmounted(() => {
 .list-card-amount {
   font-size: 13px;
   color: var(--text-secondary);
-}
-
-.list-card-sector {
-  font-size: 13px;
-  color: var(--text-primary);
-  background-color: var(--bg-color);
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid var(--border-color);
-  max-width: 50%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .circle-20cm {
@@ -1537,15 +1552,6 @@ onUnmounted(() => {
 .font-12-m0 {
   font-size: 12px !important;
   margin: 0 !important;
-}
-
-.sector-tag-mini {
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 10px;
-  color: #666;
 }
 
 /* Layout Utilities */
