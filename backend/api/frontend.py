@@ -20,12 +20,23 @@ def log_response_info(response):
 
 @frontend_bp.route('/api/index/latest', methods=['GET'])
 def get_latest_index():
+    """
+    获取最新指数数据（如上证指数）。
+    参数: date (可选, 默认为最新交易日)
+    """
     date_str = request.args.get('date')
     data = KaipanlaService.get_latest_index_data(date_str)
     return jsonify(data)
 
 @frontend_bp.route('/api/call_auction/top_n', methods=['GET'])
 def get_top_n():
+    """
+    获取竞价金额前N名的股票。
+    参数: 
+        limit (默认20)
+        date (可选, 默认为最新交易日)
+        time (可选, 默认为最新时间)
+    """
     limit = request.args.get('limit', 20, type=int)
     date_str = request.args.get('date')
     time_str = request.args.get('time')
@@ -37,6 +48,12 @@ def get_top_n():
 
 @frontend_bp.route('/api/yesterday_limit_up', methods=['GET'])
 def get_yesterday_limit_up():
+    """
+    获取昨日涨停股票及其今日表现。
+    参数: 
+        date (可选, 默认为最新交易日)
+        mode: 'performance' 获取昨日涨停股在今日的表现; 否则获取昨日涨停列表
+    """
     date_str = request.args.get('date')
     mode = request.args.get('mode')
     
@@ -52,6 +69,10 @@ def get_yesterday_limit_up():
 
 @frontend_bp.route('/api/call_auction/limit_up_925', methods=['GET'])
 def get_limit_up_925():
+    """
+    获取9:25竞价涨停的股票。
+    参数: date (可选, 默认为最新交易日)
+    """
     date_str = request.args.get('date')
     
     logger.debug(f"Querying Limit Up at 9:25: date={date_str}")
@@ -61,6 +82,10 @@ def get_limit_up_925():
 
 @frontend_bp.route('/api/call_auction/limit_down_925', methods=['GET'])
 def get_limit_down_925():
+    """
+    获取9:25竞价跌停的股票。
+    参数: date (可选, 默认为最新交易日)
+    """
     date_str = request.args.get('date')
     
     logger.debug(f"Querying Limit Down at 9:25: date={date_str}")
@@ -70,6 +95,12 @@ def get_limit_down_925():
 
 @frontend_bp.route('/api/call_auction/abnormal_movement_925', methods=['GET'])
 def get_abnormal_movement_925():
+    """
+    获取9:25竞价异动股票（9:15-9:25之间涨幅变化大的股票）。
+    参数: 
+        date (可选, 默认为最新交易日)
+        limit (默认10)
+    """
     date_str = request.args.get('date')
     limit = request.args.get('limit', 10, type=int)
     
@@ -80,6 +111,13 @@ def get_abnormal_movement_925():
 
 @frontend_bp.route('/api/call_auction/ranking', methods=['GET'])
 def get_auction_ranking():
+    """
+    获取指定时间范围内的竞价排名。
+    参数:
+        start_time, end_time (时间范围)
+        limit (默认20)
+        date (可选)
+    """
     start_time = request.args.get('start_time')
     end_time = request.args.get('end_time')
     limit = request.args.get('limit', 20, type=int)
@@ -92,6 +130,10 @@ def get_auction_ranking():
 
 @frontend_bp.route('/api/market/sentiment_925', methods=['GET'])
 def get_market_sentiment_925():
+    """
+    获取9:25的市场情绪指标（如涨停数、跌停数、成交额等）。
+    参数: date (可选, 默认为最新交易日)
+    """
     date_str = request.args.get('date')
     
     logger.debug(f"Querying Market Sentiment 9:25: date={date_str}")
@@ -101,7 +143,7 @@ def get_market_sentiment_925():
 @frontend_bp.route('/api/market/trading_days', methods=['GET'])
 def get_trading_days():
     """
-    Get list of trading days.
+    获取交易日列表。
     """
     days = MarketService.get_trading_days()
     return jsonify(days)
