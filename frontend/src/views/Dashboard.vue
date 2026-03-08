@@ -3,17 +3,17 @@
     <el-row :gutter="4">
       <!-- 1. Ranking Monitor (Left) -->
       <el-col :span="7">
-          <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }" style="height: calc(100vh - 70px); display: flex; flex-direction: column;">
+          <el-card class="box-card full-height-card card-body-flex">
           <template #header>
             <div class="card-header">
               <span>竞价排名监控 (9:15 / 9:20 / 9:25)</span>
             </div>
           </template>
-          <div class="monitor-container" style="display: flex; flex: 1; overflow: hidden;">
+          <div class="monitor-container">
              <!-- Rank Column -->
-             <div style="flex: 0 0 50px; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); height: 100%;">
-                <div class="list-header-title" style="color: var(--text-secondary);">序号</div>
-                <div class="rank-list sub-list" ref="rankListRef" @scroll="handleScroll('rank')" style="flex: 1; overflow-y: auto;">
+             <div class="rank-column">
+                <div class="list-header-title text-secondary">序号</div>
+                <div class="rank-list sub-list scrollable-list" ref="rankListRef" @scroll="handleScroll('rank')">
                    <div v-for="(item, index) in topNList" :key="'rank-' + index" 
                         class="rank-card"
                         :class="{ 'is-hovered': hoveredCode === item.code }"
@@ -25,9 +25,9 @@
              </div>
 
              <!-- 9:25 Main List -->
-             <div style="flex: 2; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); padding-right: 10px; padding-left: 10px; height: 100%;">
-                <div class="list-header-title" style="color: var(--primary-gold);">9:25 排名</div>
-                <div class="main-list" ref="mainListRef" @scroll="handleScroll('main')" style="flex: 1; overflow-y: auto;">
+             <div class="main-column">
+                <div class="list-header-title text-gold">9:25 排名</div>
+                <div class="main-list scrollable-list" ref="mainListRef" @scroll="handleScroll('main')">
                   <div v-for="(item, index) in topNList" :key="item.code" 
                        class="top-n-card" 
                        :class="{ 'is-hovered': hoveredCode === item.code }"
@@ -64,20 +64,20 @@
             </div>
             
             <!-- 9:20 List -->
-            <div style="flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); padding: 0 10px; height: 100%;">
-               <div class="list-header-title" style="color: var(--primary-blue);">9:20 排名</div>
-               <div class="sub-list" ref="subList920Ref" @scroll="handleScroll('sub920')" style="flex: 1; overflow-y: auto;">
+            <div class="sub-column">
+               <div class="list-header-title text-blue">9:20 排名</div>
+               <div class="sub-list scrollable-list" ref="subList920Ref" @scroll="handleScroll('sub920')">
                   <div v-for="(item, index) in ranking920List" :key="item.code" 
                         class="mini-card"
                         :class="{ 'is-hovered': hoveredCode === item.code }"
                         @mouseenter="handleMouseEnter(item.code)" 
                         @mouseleave="handleMouseLeave">
-                     <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-                        <div class="mini-row" style="margin-bottom: 2px;">
+                     <div class="flex-column-center-full">
+                        <div class="mini-row mb-2">
                             <span class="mini-name">{{ item.name }}</span>
                         </div>
-                        <div class="mini-row" style="margin-bottom: 0;">
-                            <span class="stock-info amount" style="font-size: 12px; margin: 0;">{{ formatAmount(item.amount) }}</span>
+                        <div class="mini-row mb-0">
+                            <span class="stock-info amount font-12-m0">{{ formatAmount(item.amount) }}</span>
                         </div>
                      </div>
                   </div>
@@ -86,20 +86,20 @@
             </div>
 
             <!-- 9:15 List -->
-            <div style="flex: 1; display: flex; flex-direction: column; padding-left: 10px; height: 100%;">
-               <div class="list-header-title" style="color: var(--primary-red);">9:15 排名</div>
-               <div class="sub-list" ref="subList915Ref" @scroll="handleScroll('sub915')" style="flex: 1; overflow-y: auto;">
+            <div class="sub-column-last">
+               <div class="list-header-title text-red">9:15 排名</div>
+               <div class="sub-list scrollable-list" ref="subList915Ref" @scroll="handleScroll('sub915')">
                    <div v-for="(item, index) in ranking915List" :key="item.code" 
                          class="mini-card"
                          :class="{ 'is-hovered': hoveredCode === item.code }"
                          @mouseenter="handleMouseEnter(item.code)" 
                          @mouseleave="handleMouseLeave">
-                      <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-                         <div class="mini-row" style="margin-bottom: 2px;">
+                      <div class="flex-column-center-full">
+                         <div class="mini-row mb-2">
                              <span class="mini-name">{{ item.name }}</span>
                          </div>
-                         <div class="mini-row" style="margin-bottom: 0;">
-                             <span class="stock-info amount" style="font-size: 12px; margin: 0;">{{ formatAmount(item.amount) }}</span>
+                         <div class="mini-row mb-0">
+                             <span class="stock-info amount font-12-m0">{{ formatAmount(item.amount) }}</span>
                          </div>
                       </div>
                    </div>
@@ -112,18 +112,18 @@
 
       <!-- 2. Yesterday Limit Up (Middle) -->
       <el-col :span="7">
-          <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }" style="height: calc(100vh - 70px); display: flex; flex-direction: column;">
+          <el-card class="box-card full-height-card card-body-flex">
             <template #header>
               <div class="card-header">
                 <span>昨日涨停表现 (9:25)</span>
               </div>
             </template>
-            <div class="yesterday-limit-up-container" style="flex: 1; overflow-y: auto;">
+            <div class="yesterday-limit-up-container scrollable-list">
                <div v-for="group in groupedYesterdayLimitUp" :key="group.key" class="limit-up-group">
                  <div class="group-label">
                     {{ group.label }}
-                    <el-tag v-if="group.rate >= 50" type="danger" effect="dark" size="small" style="margin-left: 10px;">强</el-tag>
-                    <el-tag v-else-if="group.rate < 20" type="info" effect="dark" size="small" style="margin-left: 10px;">弱</el-tag>
+                    <el-tag v-if="group.rate >= 50" type="danger" effect="dark" size="small" class="ml-10">强</el-tag>
+                    <el-tag v-else-if="group.rate < 20" type="info" effect="dark" size="small" class="ml-10">弱</el-tag>
                  </div>
                  <div class="group-items">
                     <div v-for="item in group.items" :key="item.code" 
@@ -135,21 +135,21 @@
                        <div v-if="item.is_20cm" class="circle-20cm" title="20cm">20%</div>
                        <div v-if="item.edition && item.edition > 1 && item.edition !== item.consecutive_boards" class="edition-badge">{{ item.consecutive_days }}天{{ item.edition }}板</div>
                        
-                       <div style="display: flex; flex-direction: column; width: 100%;">
-                           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                               <div style="display: flex; align-items: center; gap: 4px;">
+                       <div class="flex-column-full">
+                           <div class="flex-between-center-mb4">
+                               <div class="flex-center-gap4">
                                  <span class="stock-name">{{ item.name }}</span>
                                </div>
                                <span class="stock-info" :class="getChangeClass(item.change_percent)">{{ formatChange(item.change_percent) }}</span>
                            </div>
-                           <div style="display: flex; justify-content: space-between; align-items: center;">
+                           <div class="flex-between-center">
                                <span class="stock-info amount">
                                  {{ formatAmount(item.bidding_amount) }}
                                  <template v-if="(!item.is_20cm && item.change_percent >= 9.8 && item.asking_amount > 0) || (item.is_20cm && item.change_percent >= 19.8 && item.asking_amount > 0)">
                                    / {{ formatAmount(item.asking_amount) }}
                                  </template>
                                </span>
-                               <span class="stock-info" v-if="item.sector" style="max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; color: #666;">{{ item.sector }}</span>
+                               <span class="stock-info sector-tag-mini" v-if="item.sector">{{ item.sector }}</span>
                            </div>
                        </div>
                     </div>
@@ -162,26 +162,26 @@
 
       <!-- 3. Right Side (Sentiment + Tables) -->
       <el-col :span="10">
-        <div style="height: calc(100vh - 70px); display: flex; flex-direction: column; gap: 4px;">
+        <div class="right-side-container">
           <!-- 3.1 Market Sentiment -->
-          <el-card class="box-card" :body-style="{ padding: '15px' }" style="flex: 0 0 auto;">
+          <el-card class="box-card card-body-p15 flex-none">
             <template #header>
               <div class="card-header">
                 <span>大局观 (9:25)</span>
               </div>
             </template>
             <!-- Index Data Card -->
-            <div v-if="indexData && indexData.length > 0" class="market-overview-row" style="margin-bottom: 8px; display: flex; flex-direction: row; gap: 8px;">
-                <div v-for="idx in indexData" :key="idx.index_code" class="stat-card single-col" style="flex: 1; padding: 0 10px; display: flex; align-items: center; justify-content: center;">
-                    <div class="stat-content-mini center" style="display: flex; flex-direction: row; gap: 10px; align-items: baseline; width: 100%; justify-content: center;">
-                        <span class="stat-label" style="font-weight: bold; font-size: 16px; white-space: nowrap;">{{ idx.index_name }}</span>
-                        <span :class="getChangeClass(idx.increase_rate)" style="font-size: 16px; font-weight: bold;">{{ idx.increase_rate }}%</span>
-                        <span :class="getChangeClass(idx.increase_rate)" class="stat-value" style="font-size: 16px;">{{ idx.index_volume }}</span>
-                        <span :class="getChangeClass(idx.increase_rate)" style="font-size: 14px;">{{ idx.increase_amount }}</span>
+            <div v-if="indexData && indexData.length > 0" class="index-overview-row">
+                <div v-for="idx in indexData" :key="idx.index_code" class="stat-card index-stat-card">
+                    <div class="index-stat-content">
+                        <span class="index-stat-label">{{ idx.index_name }}</span>
+                        <span :class="getChangeClass(idx.increase_rate)" class="index-stat-value">{{ idx.increase_rate }}%</span>
+                        <span :class="getChangeClass(idx.increase_rate)" class="index-stat-value">{{ idx.index_volume }}</span>
+                        <span :class="getChangeClass(idx.increase_rate)" class="index-stat-amount">{{ idx.increase_amount }}</span>
                     </div>
                 </div>
             </div>
-            <div v-else class="no-data" style="margin-bottom: 8px; text-align: center; color: #999; font-size: 12px;">暂无指数数据</div>
+            <div v-else class="no-data-mini">暂无指数数据</div>
 
             <div class="sentiment-grid" v-if="marketSentiment && marketSentiment.today">
                <!-- Card 1: Limit Up / Down -->
@@ -277,19 +277,19 @@
 
           </el-card>
 
-          <div style="flex: 1; display: flex; gap: 4px; min-height: 0;">
+          <div class="bottom-row-container">
             <!-- 3.2 One Word Board -->
-            <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <el-card class="box-card flex-card card-body-flex">
             <template #header>
               <div class="card-header">
                 <span>一字板</span>
               </div>
             </template>
             <div class="card-list-container">
-                <div v-for="item in limitUp925List" :key="item.code" class="list-card" @mouseenter="hoveredCode = item.code" @mouseleave="hoveredCode = null" :class="{ 'is-hovered': hoveredCode === item.code }">
+                <div v-for="item in limitUp925List" :key="item.code" class="list-card" @mouseenter="handleMouseEnter(item.code)" @mouseleave="handleMouseLeave" :class="{ 'is-hovered': hoveredCode === item.code }">
                     <div class="list-card-row">
                         <span class="list-card-name">{{ item.name }}</span>
-                        <span class="text-red" style="font-weight: bold;">{{ item.change_percent }}%</span>
+                        <span class="text-red bold-percent">{{ item.change_percent }}%</span>
                     </div>
                     <div class="list-card-row">
                         <span class="list-card-amount">封单: {{ formatAmount(item.amount) }}</span>
@@ -300,19 +300,19 @@
           </el-card>
 
           <!-- 3.3 Abnormal Movement -->
-          <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+          <el-card class="box-card flex-card card-body-flex">
             <template #header>
               <div class="card-header">
                 <span>弱转强</span>
               </div>
             </template>
             <div class="card-list-container">
-                <div v-for="item in abnormalMovement925List" :key="item.code" class="list-card" @mouseenter="hoveredCode = item.code" @mouseleave="hoveredCode = null" :class="{ 'is-hovered': hoveredCode === item.code }">
+                <div v-for="item in abnormalMovement925List" :key="item.code" class="list-card" @mouseenter="handleMouseEnter(item.code)" @mouseleave="handleMouseLeave" :class="{ 'is-hovered': hoveredCode === item.code }">
                     <div class="list-card-row">
                         <span class="list-card-name">{{ item.name }}</span>
-                        <div style="display: flex; gap: 8px; align-items: baseline;">
-                            <span :class="getChangeClass(item.amplitude)" style="font-size: 13px; font-weight: 600;">拉:{{ formatPercent(item.amplitude) }}%</span>
-                            <span :class="getChangeClass(item.change_percent)" style="font-weight: bold; font-size: 16px;">{{ item.change_percent }}%</span>
+                        <div class="abnormal-movement-info">
+                            <span :class="getChangeClass(item.amplitude)" class="amplitude-val">拉:{{ formatPercent(item.amplitude) }}%</span>
+                            <span :class="getChangeClass(item.change_percent)" class="bold-percent">{{ item.change_percent }}%</span>
                         </div>
                     </div>
                     <div class="list-card-row">
@@ -324,17 +324,17 @@
           </el-card>
 
           <!-- 3.4 Nuclear Button (Limit Down) -->
-          <el-card class="box-card" :body-style="{ padding: '0px', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+          <el-card class="box-card flex-card card-body-flex">
             <template #header>
               <div class="card-header">
                 <span>核按钮</span>
               </div>
             </template>
             <div class="card-list-container">
-                <div v-for="item in limitDown925List" :key="item.code" class="list-card" @mouseenter="hoveredCode = item.code" @mouseleave="hoveredCode = null" :class="{ 'is-hovered': hoveredCode === item.code }">
+                <div v-for="item in limitDown925List" :key="item.code" class="list-card" @mouseenter="handleMouseEnter(item.code)" @mouseleave="handleMouseLeave" :class="{ 'is-hovered': hoveredCode === item.code }">
                     <div class="list-card-row">
                         <span class="list-card-name">{{ item.name }}</span>
-                        <span class="text-green" style="font-weight: bold;">{{ item.change_percent }}%</span>
+                        <span class="text-green bold-percent">{{ item.change_percent }}%</span>
                     </div>
                     <div class="list-card-row">
                         <span class="list-card-amount">封单: {{ formatAmount(item.amount) }}</span>
@@ -353,8 +353,26 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import axios from 'axios'
-import { CaretTop, CaretBottom, Refresh } from '@element-plus/icons-vue'
+import { CaretTop, CaretBottom } from '@element-plus/icons-vue'
+import { store } from '../store/dashboard.js'
 
+// --- Constants ---
+const SECTOR_COLOR_PALETTE = [
+  { solid: '#409eff', light: '#ecf5ff', text: '#409eff', border: '#d9ecff' }, // Blue
+  { solid: '#67c23a', light: '#f0f9eb', text: '#67c23a', border: '#e1f3d8' }, // Green
+  { solid: '#e6a23c', light: '#fdf6ec', text: '#e6a23c', border: '#faecd8' }, // Orange
+  { solid: '#f56c6c', light: '#fef0f0', text: '#f56c6c', border: '#fde2e2' }, // Red
+  { solid: '#7c3aed', light: '#f5f3ff', text: '#7c3aed', border: '#ede9fe' }, // Purple
+  { solid: '#d946ef', light: '#fdf2f8', text: '#d946ef', border: '#fce7f3' }, // Pink
+  { solid: '#059669', light: '#ecfdf5', text: '#059669', border: '#d1fae5' }, // Emerald
+  { solid: '#0891b2', light: '#ecfeff', text: '#0891b2', border: '#cffafe' }, // Cyan
+  { solid: '#db2777', light: '#fdf2f8', text: '#db2777', border: '#fce7f3' }, // Rose
+  { solid: '#ca8a04', light: '#fefce8', text: '#ca8a04', border: '#fef9c3' }, // Yellow-Dark
+  { solid: '#4f46e5', light: '#eef2ff', text: '#4f46e5', border: '#e0e7ff' }, // Indigo
+  { solid: '#be123c', light: '#fff1f2', text: '#be123c', border: '#ffe4e6' }  // Rose-Dark
+]
+
+// --- State: Data ---
 const topNList = ref([])
 const ranking920List = ref([])
 const ranking915List = ref([])
@@ -364,23 +382,38 @@ const limitDown925List = ref([])
 const abnormalMovement925List = ref([])
 const marketSentiment = ref(null)
 const indexData = ref([])
+const isRefreshing = ref(false)
 
-// Refs for scroll synchronization
+// --- State: Store Integration ---
+const selectedDate = computed({
+  get: () => store.selectedDate,
+  set: (val) => store.setSelectedDate(val)
+})
+
+const tradingDays = computed({
+  get: () => store.tradingDays,
+  set: (val) => store.setTradingDays(val)
+})
+
+const autoRefresh = computed({
+  get: () => store.autoRefresh,
+  set: (val) => store.setAutoRefresh(val)
+})
+
+const refreshInterval = computed({
+  get: () => store.refreshInterval,
+  set: (val) => store.setRefreshInterval(val)
+})
+
+// --- UI Interactivity: Hover & Scroll ---
+const hoveredCode = ref(null)
+const handleMouseEnter = (code) => { hoveredCode.value = code }
+const handleMouseLeave = () => { hoveredCode.value = null }
+
 const rankListRef = ref(null)
 const mainListRef = ref(null)
 const subList920Ref = ref(null)
 const subList915Ref = ref(null)
-
-// Hover state
-const hoveredCode = ref(null)
-
-const handleMouseEnter = (code) => {
-  hoveredCode.value = code
-}
-
-const handleMouseLeave = () => {
-  hoveredCode.value = null
-}
 
 const scrollLock = ref(null)
 const scrollLockTimer = ref(null)
@@ -388,12 +421,11 @@ const scrollLockTimer = ref(null)
 const handleScroll = (region) => {
   if (scrollLock.value && scrollLock.value !== region) return
   
-  // Acquire lock
   scrollLock.value = region
   clearTimeout(scrollLockTimer.value)
   scrollLockTimer.value = setTimeout(() => {
     scrollLock.value = null
-  }, 100) // 100ms release time
+  }, 100)
 
   const refs = {
     rank: rankListRef.value,
@@ -423,56 +455,51 @@ const handleScroll = (region) => {
   })
 }
 
-// Computed property for grouping yesterday limit up data
-const groupedYesterdayLimitUp = computed(() => {
-  if (!yesterdayLimitUpList.value || yesterdayLimitUpList.value.length === 0) return []
+// --- Business Logic: Computed & Helpers ---
+const calculateLimitUpCount = (items) => {
+  return items.filter(item => {
+    if (!item.change_percent) return false
+    const change = parseFloat(item.change_percent)
+    const name = item.name || ''
+    const code = item.code || ''
+    
+    let threshold = 9.8
+    if (name.includes('ST')) {
+      threshold = 4.8
+    } else if (code.startsWith('300') || code.startsWith('688')) {
+      threshold = 19.8
+    } else if (code.startsWith('8') || code.startsWith('43') || code.startsWith('83') || code.startsWith('87')) {
+      threshold = 29.8
+    }
+    
+    return change >= threshold
+  }).length
+}
+
+const processYesterdayLimitUpData = (data) => {
+  if (!data || data.length === 0) return []
   
   const fanbaoItems = []
   const regularGroups = {}
   
-  yesterdayLimitUpList.value.forEach(item => {
-    const days = item.consecutive_days || 0  // 几天几板中的连续几天
-    const boards = item.consecutive_boards || 0 // 连扳数
-    const edition = item.edition || 0 // 几天几板，不一定连扳
+  data.forEach(item => {
+    const days = item.consecutive_days || 0
+    const boards = item.consecutive_boards || 0
     
-    // Counter-package condition: consecutive_days > 4 AND consecutive_boards < 3
     if (days > 4 && boards < 3) {
       fanbaoItems.push(item)
     } else {
-      // Regular grouping
-      if (!regularGroups[boards]) {
-        regularGroups[boards] = []
-      }
+      if (!regularGroups[boards]) regularGroups[boards] = []
       regularGroups[boards].push(item)
     }
   })
   
-  // Sort regular groups
   const sortedRegular = Object.keys(regularGroups)
     .map(key => parseInt(key))
-    .sort((a, b) => b - a) // Descending
+    .sort((a, b) => b - a)
     .map(boards => {
       const items = regularGroups[boards]
-      
-      // Calculate limit up count (approximate based on opening price change)
-      const limitUpCount = items.filter(item => {
-        if (!item.change_percent) return false
-        const change = parseFloat(item.change_percent)
-        const name = item.name || ''
-        const code = item.code || ''
-        
-        let threshold = 9.8
-        if (name.includes('ST')) {
-          threshold = 4.8
-        } else if (code.startsWith('300') || code.startsWith('688')) {
-          threshold = 19.8
-        } else if (code.startsWith('8') || code.startsWith('43') || code.startsWith('83') || code.startsWith('87')) {
-          threshold = 29.8
-        }
-        
-        return change >= threshold
-      }).length
-      
+      const limitUpCount = calculateLimitUpCount(items)
       const total = items.length
       const rate = total > 0 ? Math.round((limitUpCount / total) * 100) : 0
       
@@ -484,32 +511,24 @@ const groupedYesterdayLimitUp = computed(() => {
       }
     })
     
-  // Prepend fanbao group if exists
   if (fanbaoItems.length > 0) {
-    // Sort fanbao items by days descending
     fanbaoItems.sort((a, b) => (b.consecutive_days || 0) - (a.consecutive_days || 0))
-    
     return [
-      {
-        key: 'fanbao',
-        label: '高位反包',
-        items: fanbaoItems
-      },
+      { key: 'fanbao', label: '高位反包', items: fanbaoItems },
       ...sortedRegular
     ]
   }
   
   return sortedRegular
-})
+}
+
+const groupedYesterdayLimitUp = computed(() => processYesterdayLimitUpData(yesterdayLimitUpList.value))
 
 const splitSector = (sectorStr) => {
   if (!sectorStr) return []
-  // Split by common delimiters: space, comma, semicolon, enumeration comma (English or Chinese)
-  // Filter out empty strings
   return sectorStr.split(/[\s,;；、]+/).filter(s => s && s.trim().length > 0)
 }
 
-// Compute frequency of each sector in the Top N list
 const sectorFrequency = computed(() => {
   const freq = {}
   if (!topNList.value) return freq
@@ -524,11 +543,25 @@ const sectorFrequency = computed(() => {
   return freq
 })
 
-const maxSectorCount = computed(() => {
-  const counts = Object.values(sectorFrequency.value)
-  return counts.length ? Math.max(...counts) : 0
+const rank915Map = computed(() => {
+  const map = {}
+  if (ranking915List.value) {
+    ranking915List.value.forEach((item, index) => {
+      map[item.code] = index
+    })
+  }
+  return map
 })
 
+const limitUp925Set = computed(() => {
+  const set = new Set()
+  if (limitUp925List.value) {
+    limitUp925List.value.forEach(item => set.add(item.code))
+  }
+  return set
+})
+
+// --- UI Helpers: Styling & Formatting ---
 const getRankClass = (index) => {
   if (index === 0) return 'rank-top-1'
   if (index === 1) return 'rank-top-2'
@@ -542,215 +575,54 @@ const getSortedSectors = (sectorStr) => {
   return sectors.sort((a, b) => {
     const countA = sectorFrequency.value[a] || 0
     const countB = sectorFrequency.value[b] || 0
-    return countB - countA // Descending
+    return countB - countA
   })
 }
 
 const getHeatStyle = (sectorName) => {
   const count = sectorFrequency.value[sectorName] || 0
+  if (count <= 1) return { backgroundColor: '#f4f4f5', color: '#909399', border: '1px solid #e9e9eb' }
   
-  // Logic: 
-  // 1. High absolute count (>=3) -> Solid, Bold Color (Hash-based Hue)
-  // 2. Medium absolute count (2) -> Light Background, Colored Text (Hash-based Hue)
-  // 3. Low absolute count (1) -> Grey (Noise reduction)
-  
-  if (count <= 1) {
-      // Default/Light style (for single occurrences)
-      return { backgroundColor: '#f4f4f5', color: '#909399', border: '1px solid #e9e9eb' } // Grey
-  }
-  
-  // Generate distinct color based on name hash
   let hash = 0
   for (let i = 0; i < sectorName.length; i++) {
     hash = sectorName.charCodeAt(i) + ((hash << 5) - hash)
   }
   
-  // Palette of distinct colors (Hue variations)
-  // Each entry has: solid (bg), light (bg), text (for light bg), border (for light bg)
-  const palette = [
-    { solid: '#409eff', light: '#ecf5ff', text: '#409eff', border: '#d9ecff' }, // Blue
-    { solid: '#67c23a', light: '#f0f9eb', text: '#67c23a', border: '#e1f3d8' }, // Green
-    { solid: '#e6a23c', light: '#fdf6ec', text: '#e6a23c', border: '#faecd8' }, // Orange
-    { solid: '#f56c6c', light: '#fef0f0', text: '#f56c6c', border: '#fde2e2' }, // Red
-    { solid: '#7c3aed', light: '#f5f3ff', text: '#7c3aed', border: '#ede9fe' }, // Purple
-    { solid: '#d946ef', light: '#fdf2f8', text: '#d946ef', border: '#fce7f3' }, // Pink
-    { solid: '#059669', light: '#ecfdf5', text: '#059669', border: '#d1fae5' }, // Emerald
-    { solid: '#0891b2', light: '#ecfeff', text: '#0891b2', border: '#cffafe' }, // Cyan
-    { solid: '#db2777', light: '#fdf2f8', text: '#db2777', border: '#fce7f3' }, // Rose
-    { solid: '#ca8a04', light: '#fefce8', text: '#ca8a04', border: '#fef9c3' }, // Yellow-Dark
-    { solid: '#4f46e5', light: '#eef2ff', text: '#4f46e5', border: '#e0e7ff' }, // Indigo
-    { solid: '#be123c', light: '#fff1f2', text: '#be123c', border: '#ffe4e6' }  // Rose-Dark
-  ]
-  
-  const index = Math.abs(hash) % palette.length
-  const colorSet = palette[index]
-  
-  if (count >= 3) {
-      // High Heat: Solid Color Background, White Text
-      return { 
-          backgroundColor: colorSet.solid, 
-          color: '#ffffff', 
-          border: `1px solid ${colorSet.solid}`,
-          fontWeight: 'bold'
-      }
-  } else {
-      // Medium Heat (count == 2): Light Background, Colored Text
-      return { 
-          backgroundColor: colorSet.light, 
-          color: colorSet.text, 
-          border: `1px solid ${colorSet.border}`,
-          fontWeight: 'bold'
-      }
+  const colorSet = SECTOR_COLOR_PALETTE[Math.abs(hash) % SECTOR_COLOR_PALETTE.length]
+  const isHighHeat = count >= 3
+
+  return { 
+    backgroundColor: isHighHeat ? colorSet.solid : colorSet.light, 
+    color: isHighHeat ? '#ffffff' : colorSet.text, 
+    border: `1px solid ${isHighHeat ? colorSet.solid : colorSet.border}`,
+    fontWeight: 'bold'
   }
 }
-
-// Compute frequency of each sector in the Yesterday Limit Up list
-const yesterdayLimitUpSectorFrequency = computed(() => {
-  const freq = {}
-  if (!yesterdayLimitUpList.value) return freq
-  
-  yesterdayLimitUpList.value.forEach(item => {
-    if (!item.sector) return
-    const sectors = splitSector(item.sector)
-    sectors.forEach(sec => {
-      freq[sec] = (freq[sec] || 0) + 1
-    })
-  })
-  return freq
-})
-
-const getSortedLimitUpSectors = (sectorStr) => {
-  const sectors = splitSector(sectorStr)
-  return sectors.sort((a, b) => {
-    const countA = yesterdayLimitUpSectorFrequency.value[a] || 0
-    const countB = yesterdayLimitUpSectorFrequency.value[b] || 0
-    return countB - countA // Descending
-  })
-}
-
-const getLimitUpHeatStyle = (sectorName) => {
-  const count = yesterdayLimitUpSectorFrequency.value[sectorName] || 0
-  
-  // Logic:
-  // 1. High absolute count (>=3) -> Solid, Bold Color (Hash-based Hue)
-  // 2. Medium absolute count (2) -> Light Background, Colored Text (Hash-based Hue)
-  // 3. Low absolute count (1) -> Grey (Noise reduction)
-  
-  if (count <= 1) {
-      return { backgroundColor: '#f4f4f5', color: '#909399', border: '1px solid #e9e9eb' } // Single (Gray)
-  }
-
-  // Generate distinct color based on name hash to ensure same sector has same color
-  let hash = 0
-  for (let i = 0; i < sectorName.length; i++) {
-    hash = sectorName.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  
-  const palette = [
-    { solid: '#409eff', light: '#ecf5ff', text: '#409eff', border: '#d9ecff' }, // Blue
-    { solid: '#67c23a', light: '#f0f9eb', text: '#67c23a', border: '#e1f3d8' }, // Green
-    { solid: '#e6a23c', light: '#fdf6ec', text: '#e6a23c', border: '#faecd8' }, // Orange
-    { solid: '#f56c6c', light: '#fef0f0', text: '#f56c6c', border: '#fde2e2' }, // Red
-    { solid: '#7c3aed', light: '#f5f3ff', text: '#7c3aed', border: '#ede9fe' }, // Purple
-    { solid: '#d946ef', light: '#fdf2f8', text: '#d946ef', border: '#fce7f3' }, // Pink
-    { solid: '#059669', light: '#ecfdf5', text: '#059669', border: '#d1fae5' }, // Emerald
-    { solid: '#0891b2', light: '#ecfeff', text: '#0891b2', border: '#cffafe' }, // Cyan
-    { solid: '#db2777', light: '#fdf2f8', text: '#db2777', border: '#fce7f3' }, // Rose
-    { solid: '#ca8a04', light: '#fefce8', text: '#ca8a04', border: '#fef9c3' }, // Yellow-Dark
-    { solid: '#4f46e5', light: '#eef2ff', text: '#4f46e5', border: '#e0e7ff' }, // Indigo
-    { solid: '#be123c', light: '#fff1f2', text: '#be123c', border: '#ffe4e6' }  // Rose-Dark
-  ]
-  
-  const index = Math.abs(hash) % palette.length
-  const colorSet = palette[index]
-  
-  if (count >= 3) {
-      // High Heat: Solid Color Background, White Text
-      return { 
-          backgroundColor: colorSet.solid, 
-          color: '#ffffff', 
-          border: 'none',
-          fontWeight: 'bold'
-      }
-  } else {
-      // Medium Heat (count == 2): Light Background, Colored Text
-      return { 
-          backgroundColor: colorSet.light, 
-          color: colorSet.text, 
-          border: `1px solid ${colorSet.border}`
-      }
-  }
-}
-
-const rank915Map = computed(() => {
-  const map = {}
-  if (ranking915List.value) {
-    ranking915List.value.forEach((item, index) => {
-      map[item.code] = index
-    })
-  }
-  return map
-})
 
 const getRankChangeInfo = (code, currentRank) => {
   const rank915 = rank915Map.value[code]
-  
   if (rank915 === undefined) return null
-  
-  // currentRank is 0-based. Lower index = Higher rank.
   const diff = rank915 - currentRank
-  
-  if (diff > 0) {
-    // Rank improved (e.g., 2 < 5, diff = 3) -> Red Up
-    return { icon: CaretTop, color: '#f56c6c', text: `+${diff}` }
-  } else if (diff < 0) {
-    // Rank declined (e.g., 5 > 2, diff = -3) -> Green Down
-    return { icon: CaretBottom, color: '#67c23a', text: `${diff}` }
-  }
-  
+  if (diff > 0) return { icon: CaretTop, color: '#f56c6c', text: `+${diff}` }
+  if (diff < 0) return { icon: CaretBottom, color: '#67c23a', text: `${diff}` }
   return null
 }
 
-const limitUp925Set = computed(() => {
-  const set = new Set()
-  if (limitUp925List.value) {
-    limitUp925List.value.forEach(item => set.add(item.code))
-  }
-  return set
-})
-
 const getBoardTagInfo = (item) => {
-   // Check if currently limit up (at 9:25)
-   // Rely strictly on limitUp925Set for 9:25 limit up status as requested by user.
-   // Fallback logic is removed to avoid incorrect "First Board" labeling for non-limit-up stocks.
-   const isLimitUp = limitUp925Set.value.has(item.code)
-   
-   const prevDays = item.consecutive_days || 0
-   
-   const prevBoards = item.consecutive_boards || 0
+  const isLimitUp = limitUp925Set.value.has(item.code)
+  const days = item.consecutive_days || 0
+  const boards = item.consecutive_boards || 0
   
   if (isLimitUp) {
-    if (prevDays === 0) {
-      return { text: '首板', class: 'board-tag' }
-    } else {
-      if (prevDays == prevBoards) {
-        return { text: (prevBoards + 1) + '板', class: 'board-tag' }
-      } else {
-        return { text: (prevDays + 1) + '天' + (prevBoards + 1) + '板', class: 'board-tag' }
-      }
-    }
-  } else {
-    // Not limit up now
-    if (prevDays == 1 && prevBoards == 1) {
-      return { text: '昨首板', class: 'broken-board-tag' }
-    }
-    if (prevDays > 1) {
-      if (prevDays == prevBoards) {
-        return { text: '昨' + prevBoards + '板', class: 'broken-board-tag' }
-      } else {
-        return { text: '昨' + prevDays + '天' + prevBoards + '板', class: 'broken-board-tag' }
-      }
-    }
+    if (days === 0) return { text: '首板', class: 'board-tag' }
+    const tagText = days === boards ? `${boards + 1}板` : `${days + 1}天${boards + 1}板`
+    return { text: tagText, class: 'board-tag' }
+  }
+  
+  if (days > 0) {
+    if (days === 1 && boards === 1) return { text: '昨首板', class: 'broken-board-tag' }
+    const tagText = days === boards ? `${boards}板` : `${days}天${boards}板`
+    return { text: `昨${tagText}`, class: 'broken-board-tag' }
   }
   
   return null
@@ -767,13 +639,10 @@ const getChangeClass = (val) => {
   return ''
 }
 
-
 const formatAmount = (val) => {
   if (!val) return '-'
   const num = parseFloat(val)
-  if (num >= 100000000) {
-    return (num / 100000000).toFixed(2) + '亿'
-  }
+  if (num >= 100000000) return (num / 100000000).toFixed(2) + '亿'
   return (num / 10000).toFixed(0) + '万'
 }
 
@@ -783,50 +652,32 @@ const formatPercent = (val) => {
   return isNaN(num) ? '0.00' : num.toFixed(2)
 }
 
-import { store } from '../store/dashboard.js'
+// --- Watchers ---
+watch(() => store.selectedDate, () => { refreshAll() })
+watch(() => store.autoRefresh, (val) => { handleAutoRefreshChange(val) })
+watch(() => store.refreshInterval, () => { handleIntervalChange() })
 
-const selectedDate = computed({
-  get: () => store.selectedDate,
-  set: (val) => store.setSelectedDate(val)
-})
-
-const tradingDays = computed({
-  get: () => store.tradingDays,
-  set: (val) => store.setTradingDays(val)
-})
-
-const autoRefresh = computed({
-  get: () => store.autoRefresh,
-  set: (val) => store.setAutoRefresh(val)
-})
-
-const refreshInterval = computed({
-  get: () => store.refreshInterval,
-  set: (val) => store.setRefreshInterval(val)
-})
-
-// Watch store changes
-watch(() => store.selectedDate, () => {
-  refreshAll()
-})
-
-watch(() => store.autoRefresh, (val) => {
-  handleAutoRefreshChange(val)
-})
-
-watch(() => store.refreshInterval, () => {
-  handleIntervalChange()
-})
-
+// --- Data Fetching & Timers ---
 let timer = null
-const isRefreshing = ref(false)
+
+const startTimer = () => {
+  if (timer) clearInterval(timer)
+  if (autoRefresh.value) {
+    timer = setInterval(refreshAll, refreshInterval.value)
+  }
+}
+
+const handleAutoRefreshChange = (val) => {
+  if (val) startTimer()
+  else if (timer) clearInterval(timer)
+}
+
+const handleIntervalChange = () => { startTimer() }
 
 const refreshAll = async () => {
   if (isRefreshing.value) return
   isRefreshing.value = true
-  
   try {
-    // Concurrent fetch using Promise.allSettled
     await Promise.allSettled([
       fetchTopN(),
       fetchYesterdayLimitUp(),
@@ -837,27 +688,8 @@ const refreshAll = async () => {
       fetchIndexData()
     ])
   } finally {
-      isRefreshing.value = false
-    }
-}
-
-const startTimer = () => {
-  if (timer) clearInterval(timer)
-  if (autoRefresh.value) {
-    timer = setInterval(refreshAll, refreshInterval.value)
+    isRefreshing.value = false
   }
-}
-
-const handleAutoRefreshChange = (val) => {
-  if (val) {
-    startTimer()
-  } else {
-    if (timer) clearInterval(timer)
-  }
-}
-
-const handleIntervalChange = () => {
-  startTimer()
 }
 
 const fetchTradingDays = async () => {
@@ -876,7 +708,7 @@ const fetchMarketSentiment = async () => {
     const response = await axios.get('/api/market/sentiment_925', {
       params: { 
         date: selectedDate.value,
-        _t: new Date().getTime() // Prevent caching
+        _t: new Date().getTime()
       }
     })
     marketSentiment.value = response.data
@@ -885,22 +717,13 @@ const fetchMarketSentiment = async () => {
   }
 }
 
-
-const getTodayStr = () => {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
 const fetchTopN = async () => {
   try {
     const [resTopN] = await Promise.all([
       axios.get('/api/call_auction/top_n', {
         params: { limit: 50, date: selectedDate.value }
       }),
-      fetchRankings() // Parallelize with top N call
+      fetchRankings()
     ])
     topNList.value = resTopN.data
   } catch (error) {
@@ -940,10 +763,7 @@ const fetchLimitUp925 = async () => {
 const fetchAbnormalMovement925 = async () => {
   try {
     const response = await axios.get('/api/call_auction/abnormal_movement_925', {
-      params: { 
-        date: selectedDate.value,
-        limit: 10 
-      }
+      params: { date: selectedDate.value, limit: 10 }
     })
     abnormalMovement925List.value = response.data
   } catch (error) {
@@ -963,44 +783,39 @@ const fetchLimitDown925 = async () => {
 }
 
 const fetchIndexData = async () => {
-    try {
-        const res = await axios.get('/api/index/latest', {
-            params: { date: selectedDate.value }
-        })
-        indexData.value = res.data
-    } catch (e) {
-        console.error('Failed to fetch index data:', e)
-    }
+  try {
+    const res = await axios.get('/api/index/latest', {
+      params: { date: selectedDate.value }
+    })
+    indexData.value = res.data
+  } catch (e) {
+    console.error('Failed to fetch index data:', e)
+  }
 }
 
 const fetchYesterdayLimitUp = async () => {
   try {
-    // New logic: Use "performance" mode which handles the date calculation on backend
-    // and returns merged data (yesterday limit up stocks + today's auction performance)
     const response = await axios.get('/api/yesterday_limit_up', {
-      params: { 
-        date: selectedDate.value,
-        mode: 'performance'
-      }
+      params: { date: selectedDate.value, mode: 'performance' }
     })
-    
     yesterdayLimitUpList.value = response.data
-    
-    // Convert array to object for v-for if backend returns array
-    // Our backend returns array of objects with 'consecutive_days'
-    // The computed property 'groupedYesterdayLimitUp' will handle grouping.
-    
   } catch (error) {
     console.error('Error fetching yesterday limit up:', error)
   }
 }
 
+const getTodayStr = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// --- Lifecycle Hooks ---
 onMounted(async () => {
   await fetchTradingDays()
-  // Ensure selectedDate is valid if it's not in tradingDays (e.g. today is Sunday)
   if (tradingDays.value.size > 0 && !tradingDays.value.has(selectedDate.value)) {
-     // Find the closest previous trading day
-     // Since tradingDays is a Set, we need to sort it to find the max <= today
      const sortedDays = Array.from(tradingDays.value).sort().reverse()
      const today = getTodayStr()
      const latest = sortedDays.find(d => d <= today)
@@ -1008,9 +823,7 @@ onMounted(async () => {
        selectedDate.value = latest
      }
   }
-
   refreshAll()
-  
   startTimer()
 })
 
@@ -1039,16 +852,6 @@ onUnmounted(() => {
 }
 
 
-.actions-bar {
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.right-actions {
-  display: flex;
-  align-items: center;
-}
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -1064,9 +867,6 @@ onUnmounted(() => {
 }
 
 /* Top N Card Styles */
-.top-n-container {
-  padding: 5px;
-}
 .top-n-card {
   position: relative;
   padding: 8px;
@@ -1133,7 +933,7 @@ onUnmounted(() => {
 .top-n-body {
   display: flex;
   align-items: center;
-  font-size: 13px; /* Reduced from 14px */
+  font-size: 13px;
   color: var(--text-secondary);
   white-space: nowrap; /* Prevent wrapping */
   overflow: hidden; /* Hide overflow */
@@ -1141,11 +941,11 @@ onUnmounted(() => {
 .amount-val {
   font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
   font-weight: bold;
-  font-size: 13px; /* Reduced from 15px */
+  font-size: 13px;
 }
 .amount-925 {
   color: var(--primary-red); /* Changed to red */
-  font-size: 14px; /* Reduced from 16px, still slightly larger */
+  font-size: 14px;
 }
 .amount-920 {
   color: var(--primary-blue); /* Blue */
@@ -1154,7 +954,7 @@ onUnmounted(() => {
   color: var(--primary-gold); /* Orange/Gold for initial call */
 }
 .separator {
-  margin: 0 4px; /* Reduced from 8px */
+  margin: 0 4px;
   color: var(--border-color);
 }
 .change-val {
@@ -1240,21 +1040,6 @@ onUnmounted(() => {
   font-weight: bold;
 }
 
-.limit-up-20cm-badge {
-  position: absolute;
-  top: -10px;
-  left: -10px;
-  background-color: var(--primary-red);
-  color: white;
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  white-space: nowrap;
-  z-index: 10;
-  font-weight: bold;
-}
-
 .stock-card:hover,
 .stock-card.is-hovered {
   transform: translateY(-2px);
@@ -1314,6 +1099,49 @@ onUnmounted(() => {
   min-height: 60px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
+}
+
+/* Index Data Styles */
+.index-overview-row {
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.index-stat-card {
+  flex: 1;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.index-stat-content {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  align-items: center;
+  width: 100%;
+  justify-content: center;
+}
+
+.index-stat-label {
+  font-weight: bold;
+  font-size: 15px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.index-stat-value {
+  font-size: 16px;
+  font-weight: 800;
+  font-family: monospace;
+}
+
+.index-stat-amount {
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .stat-card:hover {
@@ -1412,20 +1240,6 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.limit-up-20cm-badge {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background-color: var(--primary-gold);
-  color: white;
-  font-size: 10px;
-  padding: 1px 4px;
-  border-radius: 8px;
-  transform: scale(0.85);
-  z-index: 10;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .circle-20cm {
@@ -1582,30 +1396,9 @@ onUnmounted(() => {
   align-items: center;
   margin-bottom: 2px;
 }
-.rank-badge {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  line-height: 16px;
-  text-align: center;
-  background-color: var(--bg-color);
-  color: var(--text-secondary);
-  border-radius: 50%;
-  font-size: 10px;
-  margin-right: 6px;
-}
-.rank-badge.top-3 {
-  background-color: var(--text-primary);
-  color: var(--card-bg);
-}
 .mini-name {
   font-weight: bold;
   color: var(--text-primary);
-}
-.mini-row-amount {
-  color: var(--text-secondary);
-  padding-left: 24px;
-  font-family: monospace;
 }
 
 /* Reusing stock-name from above but scoped logic might differ slightly, keeping consistent class names */
@@ -1650,24 +1443,183 @@ onUnmounted(() => {
   padding: 20px;
 }
 
-/* Hide scrollbar for tables with no-scrollbar-table class */
-.no-scrollbar-table .el-table__body-wrapper::-webkit-scrollbar {
-  width: 0 !important;
-  height: 0 !important;
-  display: none !important;
+.abnormal-movement-info {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
 }
 
-.no-scrollbar-table .el-table__body-wrapper {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.amplitude-val {
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.no-scrollbar-table .el-table__header-wrapper .el-table__header {
-   width: 100% !important;
+.bold-percent {
+  font-weight: bold;
+  font-size: 16px;
 }
 
-.no-scrollbar-table .el-table__body-wrapper .el-table__body {
-   width: 100% !important;
+.no-data-mini {
+  margin-bottom: 8px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* Card Body Styles */
+.card-body-p15 :deep(.el-card__body) {
+  padding: 15px !important;
+}
+
+.card-body-flex :deep(.el-card__body) {
+  padding: 0px !important;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-none {
+  flex: 0 0 auto;
+}
+
+/* More Utility Classes */
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.flex-column-center-full {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.flex-column-full {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.flex-between-center {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-between-center-mb4 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.flex-center-gap4 {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mb-2 {
+  margin-bottom: 2px !important;
+}
+
+.mb-0 {
+  margin-bottom: 0 !important;
+}
+
+.ml-10 {
+  margin-left: 10px !important;
+}
+
+.font-12-m0 {
+  font-size: 12px !important;
+  margin: 0 !important;
+}
+
+.sector-tag-mini {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  color: #666;
+}
+
+/* Layout Utilities */
+.full-height-card {
+  height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+}
+
+.monitor-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.rank-column {
+  flex: 0 0 50px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  height: 100%;
+}
+
+.main-column {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  padding: 0 10px;
+  height: 100%;
+}
+
+.sub-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  padding: 0 10px;
+  height: 100%;
+}
+
+.sub-column-last {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-left: 10px;
+  height: 100%;
+}
+
+.scrollable-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.text-gold { color: var(--primary-gold); }
+.text-blue { color: var(--primary-blue); }
+
+.right-side-container {
+  height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bottom-row-container {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  min-height: 0;
+}
+
+.flex-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 </style>
 
