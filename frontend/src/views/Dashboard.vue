@@ -78,6 +78,7 @@
                         </div>
                         <div class="mini-row mb-0">
                             <span class="stock-info amount font-12-m0">{{ formatAmount(item.amount) }}</span>
+                            <span v-if="item.change_percent !== undefined" :class="getChangeClass(item.change_percent)" class="stock-info amount font-12-m0 ml-10">{{ formatChange(item.change_percent) }}</span>
                         </div>
                      </div>
                   </div>
@@ -100,6 +101,7 @@
                          </div>
                          <div class="mini-row mb-0">
                              <span class="stock-info amount font-12-m0">{{ formatAmount(item.amount) }}</span>
+                             <span v-if="item.change_percent !== undefined" :class="getChangeClass(item.change_percent)" class="stock-info amount font-12-m0 ml-10">{{ formatChange(item.change_percent) }}</span>
                          </div>
                       </div>
                    </div>
