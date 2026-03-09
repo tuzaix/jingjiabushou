@@ -228,7 +228,7 @@ class MarketService:
         """
         Get yesterday's limit up stocks.
         Filters:
-        - consecutive_days >= 2 (2连板及以上)
+        - consecutive_days >= 1 (包括首板)
         - Exclude ST stocks (name not containing 'ST')
         """
         if not date_str:
@@ -242,8 +242,7 @@ class MarketService:
         query = """
         SELECT * FROM yesterday_limit_up 
         WHERE date = %s 
-          AND consecutive_days >= 2 
-          AND consecutive_boards > 1
+          AND consecutive_days >= 1 
           AND name NOT LIKE '%%ST%%'
         """
         try:
@@ -309,14 +308,13 @@ class MarketService:
             return cached_data
 
         # 2. Get limit up stocks from prev_date
-        # Filter: consecutive_days >= 2, no ST
+        # Filter: consecutive_days >= 1, no ST
         # Also select first_limit_up_time for sorting
         query_limit_up = """
         SELECT code, name, consecutive_days, edition, consecutive_boards, limit_up_type, first_limit_up_time 
         FROM yesterday_limit_up 
         WHERE date = %s 
-          AND consecutive_days >= 2 
-          AND consecutive_boards > 1
+          AND consecutive_days >= 1 
           AND name NOT LIKE '%%ST%%'
         """
         

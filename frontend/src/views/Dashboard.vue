@@ -517,9 +517,14 @@ const processYesterdayLimitUpData = (data) => {
       const total = items.length
       const rate = total > 0 ? Math.round((limitUpCount / total) * 100) : 0
       
+      let label = `${boards}进${boards + 1}板 晋级率：${limitUpCount}/${total}=${rate}%`
+      if (boards === 1) {
+        label = `1进2板 晋级率：${limitUpCount}/${total}=${rate}%`
+      }
+      
       return {
         key: `boards-${boards}`,
-        label: `${boards}进${boards + 1}板 晋级率：${limitUpCount}/${total}=${rate}%`,
+        label: label,
         items: items,
         rate: rate
       }
